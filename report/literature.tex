@@ -1,0 +1,9 @@
+% or a part of intro?
+\section*{Literature Review} 
+One of the key considerations in automating Slovenian traffic news is the availability and adaptability of LLMs for multilingual text generation. Studies have shown that most state-of-the-art models, including OpenAI’s GPT series \cite{brown2020language}, BLOOM \cite{scao2022bloom}, and mT5 \cite{xue2021mt5}, demonstrate strong multilingual capabilities. However, Slovenian, being a low-resource language, remains under-represented in large-scale training corpora \cite{ulcar2021sloberta}. Locally fine-tuned models such as SloT5 \cite{ulcar2022slot5} have emerged to address this gap, showing promise in domain-specific Slovenian text generation.
+
+A crucial challenge in this domain is balancing between **fine-tuning** and **prompt engineering**. Fine-tuning LLMs on domain-specific text can improve accuracy but requires computational resources and well-annotated data \cite{zhang2022fine}. Prompt engineering, on the other hand, provides a lighter-weight alternative by designing effective input prompts to guide the model’s response \cite{reynolds2021prompt}. For structured and time-sensitive content like traffic news, a hybrid approach may be necessary, combining a base model with well-optimized prompting techniques.
+
+Additionally, context-aware traffic reporting can benefit from external data sources, such as live weather updates, public holiday schedules, and road congestion analytics. Studies have indicated that integrating real-time sensor data and probabilistic event modelling improves the predictive accuracy of automated reports \cite{schelter2019automated}.
+
+Based on these insights, the following sections analyse the provided structured dataset of Slovenian traffic news, examining patterns in report generation and urgency to inform an AI-based automation approach.
