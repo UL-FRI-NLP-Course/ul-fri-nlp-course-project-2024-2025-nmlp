@@ -7,6 +7,8 @@ A crucial challenge in this domain is balancing between **fine-tuning** and **pr
 Parthasarathy et al. propose and describe a seven stage pipeline for fine-tuning an LLM that covers everything from data preparation to model evaluation \cite{ultimate2024}.
 It also provides an overview of (parameter-efficient) fine-tuning techniques, enabling the selection of the optimal approach based on specific performance objectives and time efficiency requirements.
 
+Chen and Xiao explore a unique news summary generator that works by utilizing a fine-tuned LLM to generate a pool of structured event patterns, then applying a genetic algorithm on them to heuristically find the best ones and finally using another LLM to generate the summaries from those event patterns \cite{xiao2023enhancing}.
+
 Additionally, context-aware traffic reporting can benefit from external data sources, such as live weather updates, public holiday schedules, and road congestion analytics.
 Studies have indicated that integrating real-time sensor data and probabilistic event modelling improves the predictive accuracy of automated reports \cite{schelter2019automated}.
 One option to explore is to include such data in the prompt at runtime, resembling a retrieval-augmented generation (RAG) chain approach, only with live data instead of extensive documents.
