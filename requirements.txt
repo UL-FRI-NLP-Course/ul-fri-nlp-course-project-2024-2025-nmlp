@@ -7,3 +7,4 @@ sentencepiece
 openpyxl # if read_excel doesn't work
 beautifulsoup4 
 striprtf
+cdifflib

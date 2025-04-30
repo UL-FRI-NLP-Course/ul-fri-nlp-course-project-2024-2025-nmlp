@@ -2,10 +2,10 @@ import pandas as pd
 import os
 from striprtf.striprtf import rtf_to_text
 from bs4 import BeautifulSoup
+from difflib import SequenceMatcher
 
 
-
-def extract_excel_by_date(path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx", destination="filtered_traffic_2022_01_31.xlsx", 
+def extract_excel_by_date(path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx", destination="filtered_traffic_2022_01_30.xlsx", 
                         from_date="2022-01-30 00:00:00", to_date="2022-01-30 23:59:59"):
     # 1. Load the Excel file
     df = pd.read_excel(path)
@@ -24,7 +24,7 @@ def extract_excel_by_date(path="data/Podatki - PrometnoPorocilo_2022_2023_2024.x
     filtered_df.to_excel(destination, index=False)
 
     # 6. Confirm
-    print(f"Saved {len(filtered_df)} rows to 'filtered_traffic_2022_01_31.csv'")
+    print(f"Saved {len(filtered_df)} rows to 'filtered_traffic_2022_01_30.csv'")
 
 
 def clean_excel():
@@ -46,7 +46,7 @@ def clean_excel():
 
     # Save cleaned version
     df.to_excel("filtered_traffic_2022_01_31_cleaned.xlsx", index=False)
-    print("Cleaned and saved to filtered_traffic_2022_01_31_cleaned.xlsx")
+    print("Cleaned and saved to filtered_traffic_2022_01_30_cleaned.xlsx")
 
 def extract_rtf():
     # Define path to RTF folder
@@ -80,6 +80,49 @@ def extract_rtf():
     print(f"\n✅ Done. Parsed {len(parsed_outputs)} RTF files.")
 
 
+def match():
+
+    # Load the cleaned Excel data
+    excel_path = "/mnt/data/filtered_traffic_2022_01_30_cleaned.xlsx"
+    df = pd.read_excel(excel_path)
+
+    # Load the TMP output text
+    with open("/mnt/data/TMP_Jan30_outputs.txt", encoding="utf-8") as f:
+        tmp_text = f.read()
+
+    # Relevant content columns to consider for matching
+    content_columns = [col for col in df.columns if col.startswith("Content")]
+
+    # Flatten all TMP texts into a list of lines for similarity matching
+    tmp_lines = [line.strip() for line in tmp_text.splitlines() if line.strip() and not line.startswith("---")]
+
+    # Define function to score similarity
+    def max_similarity(content, candidates):
+        return max(SequenceMatcher(None, content, candidate).ratio() for candidate in candidates)
+
+    # Score each row based on maximum similarity of any of its content columns to TMP lines
+    matches = []
+
+    for idx, row in df.iterrows():
+        for col in content_columns:
+            content = str(row[col])
+            if content.strip():
+                score = max_similarity(content, tmp_lines)
+                if score > 0.6:  # threshold for "strong" match
+                    matches.append((score, idx, col, content))
+                    break  # only take first good match per row
+
+    # Sort by score descending and select top N unique rows
+    matches = sorted(matches, reverse=True)
+    selected_indices = sorted(set([m[1] for m in matches[:10]]))  # select top 10 unique rows
+
+    # Extract those rows
+    matched_df = df.loc[selected_indices]
+
+    matched_df.to_excel("matched_traffic_2022_01_30.xlsx", index=False)
+
+
 # extract_excel_by_date()
 # extract_rtf()
-clean_excel()
+# clean_excel()
+match()

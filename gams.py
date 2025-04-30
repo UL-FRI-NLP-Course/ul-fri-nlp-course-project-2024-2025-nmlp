@@ -1,28 +1,33 @@
+# Use a pipeline as a high-level helper
 from transformers import pipeline
 
-model_id = "cjvt/GaMS-2B"
+pline = pipeline("text2text-generation", model="cjvt/GaMS-2B")
+# test
+print(pline("Kaj se dogaja na štajerski avtocesti danes?"))
 
-pline = pipeline(
-    "text-generation",
-    model=model_id,
-    # device_map="cuda",
-    device_map="auto", # Multi-GPU
-)
+# pline = pipeline("text-generation", model="cjvt/GaMS-2B")
 
-prompts = [
-    "The examples of antonyms are:\nhigh => low\nwide => narrow\nbig =>",
-    "Pristanek je bil prvi nadzorovani spust ameriškega vesoljskega plovila na površje Lune po Apollu 17 leta 1972, ko je na Luni pristala zadnja Nasina misija s posadko.\nDoslej so na Luni pristala vesoljska plovila le iz štirih drugih držav –",
-    "U četvrtak je bila prva polufinalna večer Dore, a komentari na društvenim mrežama ne prestaju. U nedjeljno finale prošli su:"
-]
+print("Model loaded!\n")
+print(pline)
 
-sequences = pline(
-    prompts,
+print("Loading prompt!\n")
+# Read prompt from file
+with open("prompt.txt", "r", encoding="utf-8") as f:
+    prompt = f.read().strip()
+
+print(prompt)
+print("Prompt loaded!\n")
+# Generate output
+print("Generating report...\n")
+output = pline(
+    prompt,
     max_new_tokens=512,
     num_return_sequences=1
 )
 
-for seq in sequences:
-    print("--------------------------")
-    print(f"Result: {seq[0]['generated_text']}")
-    print("--------------------------\n")
+
+# Show result
+print("Prometno poročilo:")
+for out in output:
+    print(output[0]['generated_text'])
 
