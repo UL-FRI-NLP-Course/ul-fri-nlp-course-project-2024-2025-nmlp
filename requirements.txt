@@ -4,3 +4,6 @@ torch   # You should find exact version on website
 accelerate
 protobuf
 sentencepiece
+openpyxl # if read_excel doesn't work
+beautifulsoup4 
+striprtf
