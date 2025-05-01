@@ -1,4 +1,5 @@
 import pandas as pd
+import datetime
 
 INPUT_DATA_PATH: str = "data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx"
 
@@ -10,8 +11,14 @@ def load_data() -> pd.DataFrame:
         df = pd.concat([df, sheet_df])
     return df
 
+def get_time_window(timestamp: datetime.datetime, hours_before: int = 2, hours_after: int = 2) -> tuple[datetime.datetime, datetime.datetime]:
+    return (timestamp - datetime.timedelta(hours=hours_before), timestamp + datetime.timedelta(hours=hours_after))
+
 def main():
     df: pd.DataFrame = load_data()
+    timestamp: datetime.datetime = datetime.datetime(2024, 8, 27, 12, 0, 0)
+    time_from, time_to = get_time_window(timestamp)
+    filtered: pd.DataFrame = df[(df["Datum"] <= time_to) & (df["Datum"] >= time_from)]
 
 if __name__ == "__main__":
     main()
