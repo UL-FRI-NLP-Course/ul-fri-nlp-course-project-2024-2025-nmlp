@@ -161,8 +161,19 @@ def rtf_datetime_sort_key(filename):
     else:
         return float('-inf')
 
+def parse_rtf_datetime(text):
+    # Look for datetime in RTF like: "01. 01. 2022 08.30"
+    match = re.search(r'(\d{2}\. ?\d{2}\. ?\d{4})\s+(\d{2}\.\d{2})', text)
+    if match:
+        date_str, time_str = match.groups()
+        dt_str = date_str.replace(" ", "") + " " + time_str.replace(".", ":")
+        try:
+            return pd.to_datetime(dt_str, format="%d.%m.%Y %H:%M")
+        except:
+            return None
+    return None
+
 def find_closest_rtf_and_extract(base_dir, target_datetime):
-    # Build the folder path (e.g., Promet 2022/Januar 2022)
     month_translation = {
         "January": "Januar", "February": "Februar", "March": "Marec", "April": "April",
         "May": "Maj", "June": "Junij", "July": "Julij", "August": "Avgust",
@@ -171,17 +182,30 @@ def find_closest_rtf_and_extract(base_dir, target_datetime):
     month_name = month_translation[target_datetime.strftime("%B")]
     year = target_datetime.strftime("%Y")
     folder = f"{base_dir}/Promet {year}/{month_name} {year}"
-    print(folder)
+    print(f"Searching in folder: {folder}")
     
-    rtf_files = sorted(glob.glob(os.path.join(folder, "TMP*.rtf")), key=rtf_datetime_sort_key)
+    rtf_files = glob.glob(os.path.join(folder, "TMP*.rtf"))
+
+    best_match = None
+    smallest_diff = timedelta.max
 
     for fname in rtf_files:
         try:
             with open(fname, "r", encoding="utf-8") as f:
-                content = rtf_to_text(f.read()).strip()
-                return fname, content
+                text = rtf_to_text(f.read())
+                dt = parse_rtf_datetime(text)
+                if dt is None:
+                    continue
+                diff = abs(target_datetime - dt)
+                if diff < smallest_diff:
+                    best_match = (fname, text.strip())
+                    smallest_diff = diff
         except Exception as e:
             print(f"Error reading {fname}: {e}")
+
+    if best_match:
+        print(f"Closest RTF: {best_match[0]} at {smallest_diff}")
+        return best_match
     return None, ""
 
 def prepare_prompt_from_datetime(
@@ -221,7 +245,7 @@ def prepare_prompt_from_datetime(
 
 
 prepare_prompt_from_datetime(
-    timestamp_str="2022-01-30 15:00:00",
+    timestamp_str="2022-01-30 15:30:00",
     hours_back=8
 )
 
