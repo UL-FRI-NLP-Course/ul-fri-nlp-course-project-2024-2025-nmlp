@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 from difflib import SequenceMatcher
 import re
 from sentenceMatching import *
+import glob
+from datetime import timedelta
 
 def extract_excel_by_date(path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx", destination="filtered_traffic_2022_01_30.xlsx", 
                         from_date="2022-01-30 00:00:00", to_date="2022-01-30 23:59:59"):
@@ -146,9 +148,86 @@ def create_prompt_input(input='filtered_traffic_2022_01_30_cleaned.xlsx', output
     print("Prompt input saved to", output)
 
 
+import glob
+from datetime import timedelta
 
-extract_excel_by_date()
-extract_rtf()
-clean_excel()
-create_prompt_input(output='group_semantic.xlsx', function=group_unique_semantic)
-create_prompt_input(output='group_informative.xlsx', function=group_unique_semantic_informative)
+def rtf_datetime_sort_key(filename):
+    # Extract numeric suffix from TMP-XXX.rtf or TMP.rtf
+    match = re.search(r'TMP-(\d+)', filename)
+    if match:
+        return -int(match.group(1))  # reverse order
+    elif 'TMP.rtf' in filename:
+        return float('inf')  # oldest
+    else:
+        return float('-inf')
+
+def find_closest_rtf_and_extract(base_dir, target_datetime):
+    # Build the folder path (e.g., Promet 2022/Januar 2022)
+    month_translation = {
+        "January": "Januar", "February": "Februar", "March": "Marec", "April": "April",
+        "May": "Maj", "June": "Junij", "July": "Julij", "August": "Avgust",
+        "September": "September", "October": "Oktober", "November": "November", "December": "December"
+    }
+    month_name = month_translation[target_datetime.strftime("%B")]
+    year = target_datetime.strftime("%Y")
+    folder = f"{base_dir}/Promet {year}/{month_name} {year}"
+    print(folder)
+    
+    rtf_files = sorted(glob.glob(os.path.join(folder, "TMP*.rtf")), key=rtf_datetime_sort_key)
+
+    for fname in rtf_files:
+        try:
+            with open(fname, "r", encoding="utf-8") as f:
+                content = rtf_to_text(f.read()).strip()
+                return fname, content
+        except Exception as e:
+            print(f"Error reading {fname}: {e}")
+    return None, ""
+
+def prepare_prompt_from_datetime(
+    timestamp_str="2022-01-30 00:00:00",
+    hours_back=3,
+    rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
+    excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
+    temp_excel="filtered_traffic.xlsx",
+    temp_cleaned="filtered_traffic_cleaned.xlsx",
+    prompt_output="prompt_input.xlsx",
+    grouping_fn=group_unique_semantic_informative
+):
+    # Step 1: Parse target datetime
+    target_time = pd.to_datetime(timestamp_str)
+
+    # Step 2: Find RTF report closest to this time
+    rtf_file, rtf_text = find_closest_rtf_and_extract(rtf_base, target_time)
+    if not rtf_file:
+        print("No RTF file found.")
+        return
+
+    print(f"Closest RTF: {rtf_file}")
+
+    # Step 3: Extract Excel rows X hours before the RTF timestamp
+    from_time = target_time - timedelta(hours=hours_back)
+    extract_excel_by_date(path=excel_path, destination=temp_excel,
+                          from_date=from_time.strftime('%Y-%m-%d %H:%M:%S'),
+                          to_date=target_time.strftime('%Y-%m-%d %H:%M:%S'))
+
+    # Step 4: Clean and group the Excel
+    clean_excel(input=temp_excel, output=temp_cleaned)
+    create_prompt_input(input=temp_cleaned, output=prompt_output, function=grouping_fn)
+
+    print(f"\nFinal prompt-input saved to {prompt_output}")
+    print(f"RTF output (should match that time):\n\n---\n{rtf_text}\n---\n")
+
+
+
+prepare_prompt_from_datetime(
+    timestamp_str="2022-01-30 15:00:00",
+    hours_back=8
+)
+
+
+# extract_excel_by_date()
+# extract_rtf()
+# clean_excel()
+# create_prompt_input(output='group_semantic.xlsx', function=group_unique_semantic)
+# create_prompt_input(output='group_informative.xlsx', function=group_unique_semantic_informative)

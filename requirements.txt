@@ -7,4 +7,5 @@ sentencepiece
 openpyxl # if read_excel doesn't work
 beautifulsoup4 
 striprtf
-cdifflib
+cdifflib # standrad library
+sentence-transformers # for sentence similarity
