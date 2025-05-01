@@ -1,7 +1,13 @@
 import pandas as pd
 import datetime
+import re
 
 INPUT_DATA_PATH: str = "data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx"
+
+pd.set_option("display.max_colwidth", None)
+
+def row2str(row: pd.Series) -> str:
+    return re.sub(" +", " ", str(row))
 
 def load_data() -> pd.DataFrame:
     df: pd.DataFrame = pd.DataFrame()
@@ -19,6 +25,7 @@ def main():
     timestamp: datetime.datetime = datetime.datetime(2024, 8, 27, 12, 0, 0)
     time_from, time_to = get_time_window(timestamp)
     filtered: pd.DataFrame = df[(df["Datum"] <= time_to) & (df["Datum"] >= time_from)]
+    print(row2str(filtered.iloc[0]))
 
 if __name__ == "__main__":
     main()
