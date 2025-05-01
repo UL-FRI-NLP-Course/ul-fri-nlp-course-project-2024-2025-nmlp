@@ -1,4 +1,5 @@
 from transformers import pipeline
+import torch
 
 model_id = "cjvt/GaMS-2B"
 
@@ -7,6 +8,7 @@ pline = pipeline(
     model=model_id,
     # device_map="cuda",
     device_map="auto", # Multi-GPU
+    model_kwargs={"torch_dtype": torch.bfloat16},
 )
 
 prompts = [
