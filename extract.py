@@ -85,6 +85,7 @@ def extract_rtf():
     print(f"\n Done. Parsed {len(parsed_outputs)} RTF files.")
 
 
+# doesn't work yet
 def match():
     # Load the cleaned Excel data
     excel_path = "filtered_traffic_2022_01_30_cleaned.xlsx"
