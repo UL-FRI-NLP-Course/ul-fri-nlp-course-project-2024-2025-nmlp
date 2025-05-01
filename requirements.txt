@@ -1,7 +1,6 @@
 pandas
 openpyxl
 transformers
-torch   # You should find exact version on website
 accelerate
 protobuf
 sentencepiece
