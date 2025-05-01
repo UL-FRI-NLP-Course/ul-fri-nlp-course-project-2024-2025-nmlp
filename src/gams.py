@@ -1,7 +1,8 @@
 from transformers import pipeline
 import torch
 
-model_id = "cjvt/GaMS-2B"
+# model_id = "cjvt/GaMS-2B"
+model_id = "cjvt/GaMS-27B-Instruct"
 
 pline = pipeline(
     "text-generation",
