@@ -4,6 +4,7 @@ from striprtf.striprtf import rtf_to_text
 from bs4 import BeautifulSoup
 from difflib import SequenceMatcher
 import re
+from sentenceMatching import *
 
 def extract_excel_by_date(path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx", destination="filtered_traffic_2022_01_30.xlsx", 
                         from_date="2022-01-30 00:00:00", to_date="2022-01-30 23:59:59"):
@@ -12,6 +13,9 @@ def extract_excel_by_date(path="data/Podatki - PrometnoPorocilo_2022_2023_2024.x
 
     # 2. Convert 'Datum' to datetime (accounting for double space)
     df['Datum'] = pd.to_datetime(df['Datum'], format='%d/%m/%Y  %H:%M:%S', errors='coerce')
+
+    # remove TitleDeloNaCestiSLO
+    df = df.drop(columns=["TitleDeloNaCestiSLO"], errors='ignore')
 
     # 3. Define the time window for Jan 31st, 2022
     start_time = pd.Timestamp(from_date)
@@ -27,12 +31,16 @@ def extract_excel_by_date(path="data/Podatki - PrometnoPorocilo_2022_2023_2024.x
     print(f"Saved {len(filtered_df)} rows to 'filtered_traffic_2022_01_30.csv'")
 
 
-def clean_excel():
+def clean_excel(input='filtered_traffic_2022_01_30.xlsx', output="filtered_traffic_2022_01_30_cleaned.xlsx"):
     # Load Excel
-    df = pd.read_excel("filtered_traffic_2022_01_30.xlsx")
+    df = pd.read_excel(input)
 
     # Clean all string-like columns (not just Content*)
     text_columns = [col for col in df.columns if df[col].dtype == object]
+
+    # remove if exists TitleDeloNaCestiSLO
+    if "TitleDeloNaCestiSLO" in text_columns:
+        text_columns.remove("TitleDeloNaCestiSLO")
 
     def strip_html(text):
         if pd.isna(text):
@@ -49,7 +57,7 @@ def clean_excel():
         df[col] = df[col].apply(strip_html)
 
     # Save cleaned version
-    output_path = "filtered_traffic_2022_01_30_cleaned.xlsx"
+    output_path = output
     df.to_excel(output_path, index=False)
     print(f"Cleaned and saved to {output_path}")
 
@@ -73,9 +81,9 @@ def extract_rtf():
                 rtf_content = file.read()
                 plain_text = rtf_to_text(rtf_content)
                 parsed_outputs.append((filename, plain_text.strip()))
-                print(f"✓ Read {filename}")
+                print(f"Read {filename}")
         except Exception as e:
-            print(f"⚠️ Error reading {filename}: {e}")
+            print(f"Error reading {filename}: {e}")
 
     # Optional: save all outputs to one file
     with open("TMP_Jan30_outputs.txt", "w", encoding="utf-8") as f:
@@ -83,48 +91,6 @@ def extract_rtf():
             f.write(f"--- {fname} ---\n{content}\n\n")
 
     print(f"\n Done. Parsed {len(parsed_outputs)} RTF files.")
-
-
-# doesn't work yet
-def match():
-    # Load the cleaned Excel data
-    excel_path = "filtered_traffic_2022_01_30_cleaned.xlsx"
-    df = pd.read_excel(excel_path)
-
-    # Load the TMP output text
-    with open("TMP_Jan30_outputs.txt", encoding="utf-8") as f:
-        tmp_text = f.read()
-
-    # Relevant content columns to consider for matching
-    content_columns = [col for col in df.columns if col.startswith("Content")]
-
-    # Flatten all TMP texts into a list of lines for similarity matching
-    tmp_lines = [line.strip() for line in tmp_text.splitlines() if line.strip() and not line.startswith("---")]
-
-    # Define function to score similarity
-    def max_similarity(content, candidates):
-        return max(SequenceMatcher(None, content, candidate).ratio() for candidate in candidates)
-
-    # Score each row based on maximum similarity of any of its content columns to TMP lines
-    matches = []
-
-    for idx, row in df.iterrows():
-        for col in content_columns:
-            content = str(row[col])
-            if content.strip():
-                score = max_similarity(content, tmp_lines)
-                if score > 0.6:  # threshold for "strong" match
-                    matches.append((score, idx, col, content))
-                    break  # only take first good match per row
-
-    # Sort by score descending and select top N unique rows
-    matches = sorted(matches, reverse=True)
-    selected_indices = sorted(set([m[1] for m in matches[:10]]))  # select top 10 unique rows
-
-    # Extract those rows
-    matched_df = df.loc[selected_indices]
-
-    matched_df.to_excel("matched_traffic_2022_01_30.xlsx", index=False)
 
 
 # Clean each text cell: strip HTML and normalize whitespace
@@ -136,9 +102,24 @@ def clean_text(text):
         return re.sub(r'\s+', ' ', text).strip()
     return ""
 
-def create_prompt_input():
+# Combine all cleaned fields into a deduplicated list of sentences per row
+def extract_unique_sentences(row):
+    joined = " ".join(str(cell) for cell in row if isinstance(cell, str))
+    sentences = re.split(r'(?<=[.!?])\s+', joined)
+    unique = list(dict.fromkeys([s.strip() for s in sentences if s.strip()]))
+    return " ".join(unique)
+
+# Group by time block and remove cross-row duplicates too
+def group_unique_sentences(series):
+    all_sentences = []
+    for text in series:
+        all_sentences.extend(re.split(r'(?<=[.!?])\s+', text))
+    unique = list(dict.fromkeys([s.strip() for s in all_sentences if s.strip()]))
+    return " ".join(unique)
+
+def create_prompt_input(input='filtered_traffic_2022_01_30_cleaned.xlsx', output='prompt_input_traffic_2022_01_30.xlsx', function=group_unique_sentences):
     # Reload the cleaned Excel file
-    df = pd.read_excel("filtered_traffic_2022_01_30_cleaned.xlsx")
+    df = pd.read_excel(input)
 
     # Drop unused columns
     df = df.drop(columns=["LegacyId", "Operater"], errors="ignore")
@@ -147,43 +128,27 @@ def create_prompt_input():
     df["Datum"] = pd.to_datetime(df["Datum"])
     df["TimeGroup"] = df["Datum"].dt.floor("30min")
 
-
     # Apply cleaning across all columns (except time metadata)
     text_columns = df.columns.difference(["Datum", "TimeGroup"])
     for col in text_columns:
         df[col] = df[col].apply(clean_text)
 
-    # Combine all cleaned fields into a deduplicated list of sentences per row
-    def extract_unique_sentences(row):
-        joined = " ".join(str(cell) for cell in row if isinstance(cell, str))
-        sentences = re.split(r'(?<=[.!?])\s+', joined)
-        unique = list(dict.fromkeys([s.strip() for s in sentences if s.strip()]))
-        return " ".join(unique)
-
     df["combined"] = df[text_columns].apply(extract_unique_sentences, axis=1)
-
-    # Group by time block and remove cross-row duplicates too
-    def group_unique_sentences(series):
-        all_sentences = []
-        for text in series:
-            all_sentences.extend(re.split(r'(?<=[.!?])\s+', text))
-        unique = list(dict.fromkeys([s.strip() for s in all_sentences if s.strip()]))
-        return " ".join(unique)
 
     grouped = (
         df.groupby("TimeGroup")["combined"]
-        .apply(group_unique_sentences)
+        .apply(function)
         .reset_index()
         .rename(columns={"combined": "data"})
     )
 
-    grouped.to_excel("prompt_input_traffic_2022_01_30.xlsx", index=False)
-    print("Prompt input saved to 'prompt_input_traffic_2022_01_30.xlsx'")
+    grouped.to_excel(output, index=False)
+    print("Prompt input saved to", output)
 
 
 
-# extract_excel_by_date()
-# extract_rtf()
-# clean_excel()
-# match()
-create_prompt_input()
+extract_excel_by_date()
+extract_rtf()
+clean_excel()
+create_prompt_input(output='group_semantic.xlsx', function=group_unique_semantic)
+create_prompt_input(output='group_informative.xlsx', function=group_unique_semantic_informative)
