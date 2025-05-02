@@ -1,6 +1,7 @@
 import re
 import glob
 import datetime
+import itertools
 import pandas as pd
 from typing import Any
 from striprtf.striprtf import rtf_to_text
@@ -19,10 +20,13 @@ def main():
         with open(filename, "rt") as file:
             text: str = rtf_to_text(file.read()).strip()
             if len(text) < 10:
-                print(f"file too short: {len(text)=}, {filename=}")
+                print(f"File too short: {len(text)=}, {filename=}")
                 continue
             header, body = text.split("\n", maxsplit=1)
             header, body = clean_str(header), clean_str(body)
+            if len(list(itertools.islice(re.finditer(r"\s+", body), 5))) != 5:
+                print(f"Body has too few sentences, skipping {filename=}")
+                continue
             header_match: re.Match[str] | None = re.search(HEADER_REGEX, header)
             if header_match is None:
                 print(f"Error while parsing {filename=}")
