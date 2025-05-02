@@ -13,6 +13,9 @@ HEADER_REGEX: re.Pattern = re.compile(r"^([^0-9]*?)\s*([0-9]+)\.\s*([0-9]+)\.\s*
 def clean_str(to_be_cleaned: str) -> str:
     return re.sub(r"\x00", "", to_be_cleaned).strip()
 
+def load_structured() -> pd.DataFrame:
+    return pd.read_json(OUTPUT_FILE, lines=True)
+
 def main():
     files: list[str] = glob.glob(f"{PATH_TO_RTFS}/**/*.rtf", recursive=True)
     rows: list[dict[str, Any]] = []
