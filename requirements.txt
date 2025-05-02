@@ -1,11 +1,13 @@
-pandas
+pandas==2.2.3
 transformers
-torch   # You should find exact version on website
+numpy==2.1.0
+torch==2.5.1+cu121   # You should find exact version on website
 accelerate
 protobuf
 sentencepiece
 openpyxl # if read_excel doesn't work
-beautifulsoup4 
-striprtf
+beautifulsoup4==4.12.3
+striprtf==0.0.29
 cdifflib # standrad library
-sentence-transformers # for sentence similarity
+sentence-transformers==4.1.0 # for sentence similarity
+scikit-learn==1.6.0

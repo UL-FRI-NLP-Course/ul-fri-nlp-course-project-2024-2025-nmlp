@@ -263,7 +263,7 @@ def prepare_prompt_from_datetime(
     # Step 4: Clean and group the Excel
     clean_excel(input=temp_excel, output=temp_cleaned)
     # create_prompt_input(input=temp_cleaned, output=prompt_output, function=grouping_fn)
-    flat_input = create_flat_input(input=temp_cleaned, output="flat_prompt_input.txt", function=grouping_fn, from_time=from_time)
+    flat_input = create_flat_input(input=temp_cleaned, output="flat_prompt_input.txt", function=grouping_fn, from_time=target_time)
 
 
     print(f"\nFinal prompt-input saved to {prompt_output}")
@@ -306,7 +306,7 @@ def test_preprocessing_strategies():
 
 prompt_input, rtf_output = prepare_prompt_from_datetime(
     timestamp_str="2022-01-30 15:30:00",
-    hours_back=2,
+    hours_back=24,
     grouping_fn=group_unique_semantic_informative
 )
 

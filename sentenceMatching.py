@@ -2,9 +2,11 @@ from sentence_transformers import SentenceTransformer, util
 import re
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
+import torch
 
-
-model = SentenceTransformer('paraphrase-MiniLM-L6-v2')  # lightweight model for semantic similarity
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(device)
+model = SentenceTransformer('paraphrase-MiniLM-L6-v2', device=device)  # lightweight model for semantic similarity
 
 def compute_similarity_score(generated, reference):
     emb1 = model.encode(generated, convert_to_tensor=True)
