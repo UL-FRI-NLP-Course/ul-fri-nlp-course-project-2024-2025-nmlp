@@ -25,11 +25,11 @@ def main():
             header, body = text.split("\n", maxsplit=1)
             header, body = clean_str(header), clean_str(body)
             if len(list(itertools.islice(re.finditer(r"\s+", body), 5))) != 5:
-                # print(f"Body has too few sentences, skipping {filename=}")
+                print(f"Body has too few sentences, skipping {filename=}")
                 continue
             header_match: re.Match[str] | None = re.search(HEADER_REGEX, header)
             if header_match is None:
-                # print(f"Error while parsing {filename=}")
+                print(f"Error while parsing {filename=}")
                 continue
             prefix, day, month, year, hour, minute, postfix = header_match.groups()
             rows.append({
