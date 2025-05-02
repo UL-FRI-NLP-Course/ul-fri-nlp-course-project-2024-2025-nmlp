@@ -14,7 +14,7 @@ pline = pipeline(
 )
 
 shot_1: str = """
-    INPUT:
+    VHOD:
     <p><strong>Zastoji</strong></p>
     <p>- na ljubljanski južni obvoznici od Rudnika proti razcepu Kozarje;
         <br>- na gorenjski avtocesti od Kosez do predora Šentvid proti Kranju;
@@ -23,14 +23,14 @@ shot_1: str = """
         <br>- na cestah Ljubljana - Brezovica, Lesce - Bled in Šmarje - Koper.
     </p>
 
-    OUTPUT:
+    IZHOD:
     Zastoji so na cestah Šmarje-Koper in Lesce-Bled.
     Prav tako so zastoji na zahodni in južni ljubljanski obvoznici od Kosez in Rudnika proti Primorski. Potovalni čas se na obeh odsekih podaljša za približno 15 minut.
     Zaradi del je krajši zastoj na štajerski avtocesti med Blagovico in Trojanami proti Mariboru. Opozarjamo na nevarnost naleta.
 """
 
 shot_2: str = """
-    INPUT:
+    VHOD:
     <p><strong>Zastoji</strong></p>
     <p>Na štajerski avtocesti:
         <br>- med Lukovico in Blagovico proti Celju, zamuda dobre pol ure
@@ -48,7 +48,7 @@ shot_2: str = """
         <br>- V Ljubljani bo zaprta Litijska cesta med Pesarsko cesto in Potjo na Breje danes od 8. ure do polnoči.
     </p>
 
-    OUTPUT:
+    IZHOD:
     Zastoji so na štajerski avtocesti med Lukovico in Blagovico proti Celju, čas vožnje se podaljša za dobre pol ure. Zastoji so tudi na regionalni cesti Blagovica - Trojane - Vransko.
     Pokvarjeno vozilo ovira promet na štajerski avtocesti pred priključkom Celje zahod proti Mariboru.
     Štajerska avtocesta bo zaprta med priključkoma Blagovica in Vransko proti Mariboru do ponedeljka do 5. ure. Na priključku Trojane sta zaprta tudi uvoza proti Mariboru in Ljubljani, obvoz je urejen po regionalni cesti.
@@ -59,7 +59,7 @@ shot_2: str = """
 """
 
 shot_3: str = """
-    INPUT:
+    VHOD:
     <p><strong>Nesreče</strong></p>
     <p>Na štajerski avtocesti je zaprt vozni pas med priključkoma Vransko in Šentrupert proti Mariboru. Nastal je zastoj, zamuda 10 - 15 minut.</p>
     <p><strong>Ovire</strong></p>
@@ -67,37 +67,37 @@ shot_3: str = """
     <p><strong>Delo na cesti</strong></p>
     <p>Na gorenjski avtocesti bo promet med 11. in 16. uro potekal izmenično enosmerno skozi predor Karavanke.</p>
 
-    OUTPUT:
+    IZHOD:
     Na štajerski avtocesti proti Mariboru je zaradi nesreče zaprt vozni pas med priključkoma Vransko in Šentrupert. Nastal je krajši zastoj. Opozarjamo na nevarnost naleta.
     Proti Ljubljani je na istem odseku zaradi pokvarjenega vozila oviran promet pred predorom Ločica.
     Pokvarjeno vozilo ovira promet tudi na gorenjski avtocesti med predorom Ljubno in priključkom Podtabor proti Ljubljani.
     Od 11-ih do 16-ih bo promet skozi predor Karavanke zaradi del urejen izmenično enosmerno.
 """
 
-prompts = [
     # "The examples of antonyms are:\nhigh => low\nwide => narrow\nbig =>",
     # "Pristanek je bil prvi nadzorovani spust ameriškega vesoljskega plovila na površje Lune po Apollu 17 leta 1972, ko je na Luni pristala zadnja Nasina misija s posadko.\nDoslej so na Luni pristala vesoljska plovila le iz štirih drugih držav –",
     # "U četvrtak je bila prva polufinalna večer Dore, a komentari na društvenim mrežama ne prestaju. U nedjeljno finale prošli su:",
+prompts = [
     f"""
-    You are an expert traffic reporter.
-    You will be given some data that was scraped from a traffic news website.
-    Your task is to create a short traffic report from it.
+    Si profesionalen poročevalec prometnih informacij.
+    Dobil boš nekaj podatkov, ki so bili pridobljeni s spletne strani prometnih informacij.
+    Tvoja naloga je da ustvariš kratko prometno poročilo (IZHOD) na podlagi teh podatkov (VHOD).
 
-    Continue the following examples:
+    Nadaljuj zaporedje naslednjih primerov:
 
     {shot_1}
 
-    ### NEXT EXAMPLE ###
+    ### NASLEDNJI PRIMER ###
 
     {shot_2}
 
-    ### NEXT EXAMPLE ###
+    ### NASLEDNJI PRIMER ###
 
     {shot_3}
 
-    ### NEXT EXAMPLE ###
+    ### NASLEDNJI PRIMER ###
 
-    INPUT:
+    VHOD:
     <p><strong>Ovire</strong></p>
     <p>Na štajerski avtocesti je zaradi okvare vozila oviran promet na zaviralnem pasu pred izvozom Blagovica iz smeri Ljubljane.</p>
     <p>Na primorski avtocesti je zaradi okvare vozila oviran promet med razcepom Nanos in priključkom Senožeče proti Kopru.</p>
@@ -116,7 +116,7 @@ prompts = [
     </p>
     <p>V Domžalah je zaprta Virska cesta, med Ljubljansko cesto in Podrečjem. Do 10. aprila bo promet preko priključka Domžale proti Kamniku preusmerjen na lokalne ceste.</p>
 
-    OUTPUT:
+    IZHOD:
     """,
 ]
 
