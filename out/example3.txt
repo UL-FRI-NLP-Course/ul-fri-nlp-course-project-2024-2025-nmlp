@@ -1,0 +1,267 @@
+--------------------------
+Result: 
+    Poziv za generiranje prometnih poročil (RTV Slovenija)
+    Generiraj kratko in strukturirano prometno poročilo v slogu RTV Slovenija na podlagi tabelaričnih prometnih dogodkov (iz preteklih X ur, npr. 3–4 ure).
+    Oblika poročila:
+    ------------------------------------------------------------
+    Prometne informacije       DD. MM. YYYY       HH.MM           2. program
+    
+    Podatki o prometu.
+    
+    <sledi povzetek> 
+    ------------------------------------------------------------
+    
+    Navodila za vsebino:
+    - Povzemi pomembne dogodke: nesreče, zapore cest, živali na vozišču, izredne razmere (burja, tovorna prepoved).
+    - Vključi strukturo stavkov:
+        1. opcija: Cesta in smer + razlog + posledica + odsek
+        2. opcija: Razlog + cesta in smer + posledica + odsek
+    - Prednost imajo stavki, ki vključujejo:
+      - znana cestna imena (avtoceste, razcepi, mesta),
+      - konkretne učinke na promet (zastoji, zapora pasu),
+      - točne lokacije (med priključkoma X in Y).
+    
+    Navodila za slog:
+    - Ne ponavljaj istih ali zelo podobnih informacij.
+    - Združi podobne stavke, obdrži najbolj informativen.
+    - Ne vključuj trivialnih informacij ali običajnih konic, razen če so izredno dolge ali nenavadne.
+    - Vsak stavek naj bo jedrnat in razumljiv za branje v etru.
+    
+    Spodaj sledijo primeri vhodnih podatkov (iz Excela) in ustrezno oblikovanih izhodnih poročil:
+
+    
+    VHOD:
+    <p><strong>Zastoji</strong></p>
+    <p>- na ljubljanski južni obvoznici od Rudnika proti razcepu Kozarje;
+        <br>- na gorenjski avtocesti od Kosez do predora Šentvid proti Kranju;
+        <br>- na štajerski avtocesti med Blagovico in Trojanami proti Celju ter pred prehodom Šentilj proti Avstriji;
+        <br>- na ljubljanski zahodni obvoznici od Kosez proti Kozarjam ter na primorski avtocesti med Ljubljano in Brezovico proti Kopru;
+        <br>- na cestah Ljubljana - Brezovica, Lesce - Bled in Šmarje - Koper.
+    </p>
+
+    IZHOD:
+    Zastoji so na cestah Šmarje-Koper in Lesce-Bled.
+    Prav tako so zastoji na zahodni in južni ljubljanski obvoznici od Kosez in Rudnika proti Primorski. Potovalni čas se na obeh odsekih podaljša za približno 15 minut.
+    Zaradi del je krajši zastoj na štajerski avtocesti med Blagovico in Trojanami proti Mariboru. Opozarjamo na nevarnost naleta.
+
+
+    ### NASLEDNJI PRIMER ###
+
+    
+    VHOD:
+    <p><strong>Zastoji</strong></p>
+    <p>Na štajerski avtocesti:
+        <br>- med Lukovico in Blagovico proti Celju, zamuda dobre pol ure
+    </p>
+    <p>Na regionalni cesti Blagovica - Trojane - Vransko.</p>
+    <p><strong>Avtoceste:</strong>
+        <br><strong>- Štajerska avtocesta bo zaprta med priključkoma Blagovica in Vransko proti Mariboru do ponedeljka, 2. 12. do 5. ure. Na priključku Trojane sta zaprta tudi uvoza proti Mariboru in Ljubljani, obvoz je urejen po regionalni cesti. Pričakujemo zastoje.</strong>
+        <br><strong>- </strong>Na štajerski avtocesti med Framom in Slovensko Bistrico bodo do nedelje, 1. 12., izmenično zapirali vozni in prehitevalni pas v obe smeri zaradi odstranjevanja delovne zapore. Lahko nastane zastoj.
+        <br>- Na primorski avtocesti med Logatcem in Uncem proti Kopru promet poteka samo po prehitevalnem pasu.
+    </p>
+    <p><strong>Popolne zapore na ostalih cestah:</strong>
+        <br>- Cesta Koprivna - Črna, pri Pristavi, bo zaprta do 17. ure.
+        <br>- Cesta Litija - Zagorje bo zaprta pri Šklendrovcu danes do 17. ure ter v prihodnjem tednu od ponedeljka do sobote, vsak dan med 8. in 17. uro.
+        <br>- Cesta Bistrica pri Tržiču -Begunje, v Bistrici, na Begunjski cesti, do nedelje do 17. ure.
+        <br>- V Ljubljani bo zaprta Litijska cesta med Pesarsko cesto in Potjo na Breje danes od 8. ure do polnoči.
+    </p>
+
+    IZHOD:
+    Zastoji so na štajerski avtocesti med Lukovico in Blagovico proti Celju, čas vožnje se podaljša za dobre pol ure. Zastoji so tudi na regionalni cesti Blagovica - Trojane - Vransko.
+    Pokvarjeno vozilo ovira promet na štajerski avtocesti pred priključkom Celje zahod proti Mariboru.
+    Štajerska avtocesta bo zaprta med priključkoma Blagovica in Vransko proti Mariboru do ponedeljka do 5. ure. Na priključku Trojane sta zaprta tudi uvoza proti Mariboru in Ljubljani, obvoz je urejen po regionalni cesti.
+    Na štajerski avtocesti med Framom in Slovensko Bistrico izmenično zapirajo vozni in prehitevalni pas v obe smeri zaradi odstranjevanja delovne zapore.
+    Na primorski avtocesti med Logatcem in Uncem proti Kopru promet poteka samo po prehitevalnem pasu.
+    Cesta Koprivna - Črna, pri Pristavi, bo zaprta do 17. ure, prav tako cesta Litija - Zagorje pri Šklendrovcu in cesta Bistrica pri Tržiču - Begunje, v Bistrici, na Begunjski cesti
+    V Ljubljani bo do polnoči zaprta Litijska cesta med Pesarsko cesto in Potjo na Breje.
+
+
+    ### NASLEDNJI PRIMER ###
+
+    
+    VHOD:
+    <p><strong>Nesreče</strong></p>
+    <p>Na štajerski avtocesti je zaprt vozni pas med priključkoma Vransko in Šentrupert proti Mariboru. Nastal je zastoj, zamuda 10 - 15 minut.</p>
+    <p><strong>Ovire</strong></p>
+    <p>Na gorenjski avtocesti oviran promet zaradi okvare tovornega vozila med predorom Ljublbno in priključkom Podtabor proti Ljubljani.</p>
+    <p><strong>Delo na cesti</strong></p>
+    <p>Na gorenjski avtocesti bo promet med 11. in 16. uro potekal izmenično enosmerno skozi predor Karavanke.</p>
+
+    IZHOD:
+    Na štajerski avtocesti proti Mariboru je zaradi nesreče zaprt vozni pas med priključkoma Vransko in Šentrupert. Nastal je krajši zastoj. Opozarjamo na nevarnost naleta.
+    Proti Ljubljani je na istem odseku zaradi pokvarjenega vozila oviran promet pred predorom Ločica.
+    Pokvarjeno vozilo ovira promet tudi na gorenjski avtocesti med predorom Ljubno in priključkom Podtabor proti Ljubljani.
+    Od 11-ih do 16-ih bo promet skozi predor Karavanke zaradi del urejen izmenično enosmerno.
+
+
+    ### NASLEDNJI PRIMER ###
+
+    VHOD:
+    
+    <p><strong>Nesreča </strong></p>
+    <p>Na gorenjski avtocesti je na izvozu Šmartno proti Jesenicam oviran promet.</p>
+    <p><strong>Ovire</strong></p>
+    <p>Cesta Bovec - Kobarid je pri Bovcu zaprta zaradi podrtega drevesa.</p>
+    <p><strong>Vreme</strong></p>
+    <p><strong>Burja 1. stopnje</strong>, prepovedan promet za počitniške prikolice, hladilnike in vozila s ponjavami do 8 ton:
+        <br>- Na vipavski hitri cesti med Nanosom in Selom.
+        <br>- Na regionalni cesti med Vipavo in Ajdovščino.
+    </p>
+    <p>Ponekod po Sloveniji megla zmanjšuje vidljivost.</p>
+    <p><strong>Zimske razmere</strong></p>
+    <p>Cesta čez prelaz <strong>Vršič</strong> je zaprta.</p>
+    <p><strong>Delo na cesti</strong></p>
+    <p><strong>Štajerska avtocesta </strong>bo do nedelje do 5. ure zaprta med Vranskim in Blagovico proti Ljubljani.</p>
+    <p><strong>Predvidene popolne zapore, ta vikend:</strong>
+        <br>- <strong>Hitra cesta Razdrto - Vrtojba</strong> bo zaprta v nedeljo med 8. in 10. uro med Šempetrom in Vrtojbo proti Italiji. Obvoz bo po vzporednih cestah med Šempetrom in počivališčem Vrtojba.
+        <br>- <strong>Odpovedali in prestavili so za ta konec tedna predvideno popolno zaporo ceste Brezovica - Podpeč </strong>v Notranjih Goricah pri železniškem nadvozu.
+    </p>
+    <p>Prihodnji teden, predvidoma v sredo, 25. januarja, bodo zaradi del zaprli cesto Dole - Ponikve - Loče, med Ponikvo in Zlatečami.</p>
+
+
+    IZHOD:
+    Na gorenjski avtocesti je na izvozu Šmartno proti Jesenicam oviran promet.
+    Cesta Bovec - Kobarid je pri Bovcu zaprta zaradi podrtega drevesa.
+    Cesta čez prelaz Vršič je zaprta.
+    Štajerska avtocesta bo do nedelje do 5. ure zaprta med Vranskim in Blagovico proti Ljubljani.
+    Hitra cesta Razdrto - Vrtojba bo v nedeljo med 8. in 10. uro zaprta med Šempetrom in Vrtojbo proti Italiji. Obvoz bo po vzporednih cestah med Šempetrom in počivališčem Vrtojba.
+    Odpovedali in prestavili so za ta konec tedna predvideno popolno zaporo ceste Brezovica - Podpeč v Notranjih Goricah pri železniškem nadvozu.
+    Prihodnji teden, predvidoma v sredo, 25. januarja, bodo zaradi del zaprli cesto Dole - Ponikve - Loče, med Ponikvo in Zlatečami.
+    Burja 1. stopnje, prepovedan promet za počitniške prikolice, hladilnike in vozila s ponjavami do 8 ton, je na vipavski hitri cesti med Nanosom in Selom ter na regionalni cesti med Vipavo in Ajdovščino.
+    Ponekod po Sloveniji megla zmanjšuje vidljivost.
+    </p>
+
+    
+    Prosimo, da generirate poročilo na podlagi spodnjih podatkov:
+
+    
+    VHOD:
+    <p><strong>Nesreče</strong></p>
+    <p>Na štajerski avtocesti je zaprt vozni pas med priključkoma Vransko in Šentrupert proti Mariboru. Nastal je zastoj, zamuda 10 - 15 minut.</p>
+    <p><strong>Ovire</strong></p>
+    <p>Na gorenjski avtocesti oviran promet zaradi okvare tovornega vozila med predorom Ljubno in priključkom Podtabor proti Ljubljani.</p>
+    <p><strong>Delo na cesti</strong>
+--------------------------
+
+--------------------------
+Result: 
+    Si profesionalen poročevalec prometnih informacij.
+    Dobil boš nekaj podatkov, ki so bili pridobljeni s spletne strani prometnih informacij.
+    Tvoja naloga je da ustvariš kratko prometno poročilo (IZHOD) na podlagi teh podatkov (VHOD).
+
+    Nadaljuj zaporedje naslednjih primerov:
+
+    
+    VHOD:
+    <p><strong>Zastoji</strong></p>
+    <p>- na ljubljanski južni obvoznici od Rudnika proti razcepu Kozarje;
+        <br>- na gorenjski avtocesti od Kosez do predora Šentvid proti Kranju;
+        <br>- na štajerski avtocesti med Blagovico in Trojanami proti Celju ter pred prehodom Šentilj proti Avstriji;
+        <br>- na ljubljanski zahodni obvoznici od Kosez proti Kozarjam ter na primorski avtocesti med Ljubljano in Brezovico proti Kopru;
+        <br>- na cestah Ljubljana - Brezovica, Lesce - Bled in Šmarje - Koper.
+    </p>
+
+    IZHOD:
+    Zastoji so na cestah Šmarje-Koper in Lesce-Bled.
+    Prav tako so zastoji na zahodni in južni ljubljanski obvoznici od Kosez in Rudnika proti Primorski. Potovalni čas se na obeh odsekih podaljša za približno 15 minut.
+    Zaradi del je krajši zastoj na štajerski avtocesti med Blagovico in Trojanami proti Mariboru. Opozarjamo na nevarnost naleta.
+
+
+    ### NASLEDNJI PRIMER ###
+
+    
+    VHOD:
+    <p><strong>Zastoji</strong></p>
+    <p>Na štajerski avtocesti:
+        <br>- med Lukovico in Blagovico proti Celju, zamuda dobre pol ure
+    </p>
+    <p>Na regionalni cesti Blagovica - Trojane - Vransko.</p>
+    <p><strong>Avtoceste:</strong>
+        <br><strong>- Štajerska avtocesta bo zaprta med priključkoma Blagovica in Vransko proti Mariboru do ponedeljka, 2. 12. do 5. ure. Na priključku Trojane sta zaprta tudi uvoza proti Mariboru in Ljubljani, obvoz je urejen po regionalni cesti. Pričakujemo zastoje.</strong>
+        <br><strong>- </strong>Na štajerski avtocesti med Framom in Slovensko Bistrico bodo do nedelje, 1. 12., izmenično zapirali vozni in prehitevalni pas v obe smeri zaradi odstranjevanja delovne zapore. Lahko nastane zastoj.
+        <br>- Na primorski avtocesti med Logatcem in Uncem proti Kopru promet poteka samo po prehitevalnem pasu.
+    </p>
+    <p><strong>Popolne zapore na ostalih cestah:</strong>
+        <br>- Cesta Koprivna - Črna, pri Pristavi, bo zaprta do 17. ure.
+        <br>- Cesta Litija - Zagorje bo zaprta pri Šklendrovcu danes do 17. ure ter v prihodnjem tednu od ponedeljka do sobote, vsak dan med 8. in 17. uro.
+        <br>- Cesta Bistrica pri Tržiču -Begunje, v Bistrici, na Begunjski cesti, do nedelje do 17. ure.
+        <br>- V Ljubljani bo zaprta Litijska cesta med Pesarsko cesto in Potjo na Breje danes od 8. ure do polnoči.
+    </p>
+
+    IZHOD:
+    Zastoji so na štajerski avtocesti med Lukovico in Blagovico proti Celju, čas vožnje se podaljša za dobre pol ure. Zastoji so tudi na regionalni cesti Blagovica - Trojane - Vransko.
+    Pokvarjeno vozilo ovira promet na štajerski avtocesti pred priključkom Celje zahod proti Mariboru.
+    Štajerska avtocesta bo zaprta med priključkoma Blagovica in Vransko proti Mariboru do ponedeljka do 5. ure. Na priključku Trojane sta zaprta tudi uvoza proti Mariboru in Ljubljani, obvoz je urejen po regionalni cesti.
+    Na štajerski avtocesti med Framom in Slovensko Bistrico izmenično zapirajo vozni in prehitevalni pas v obe smeri zaradi odstranjevanja delovne zapore.
+    Na primorski avtocesti med Logatcem in Uncem proti Kopru promet poteka samo po prehitevalnem pasu.
+    Cesta Koprivna - Črna, pri Pristavi, bo zaprta do 17. ure, prav tako cesta Litija - Zagorje pri Šklendrovcu in cesta Bistrica pri Tržiču - Begunje, v Bistrici, na Begunjski cesti
+    V Ljubljani bo do polnoči zaprta Litijska cesta med Pesarsko cesto in Potjo na Breje.
+
+
+    ### NASLEDNJI PRIMER ###
+
+    
+    VHOD:
+    <p><strong>Nesreče</strong></p>
+    <p>Na štajerski avtocesti je zaprt vozni pas med priključkoma Vransko in Šentrupert proti Mariboru. Nastal je zastoj, zamuda 10 - 15 minut.</p>
+    <p><strong>Ovire</strong></p>
+    <p>Na gorenjski avtocesti oviran promet zaradi okvare tovornega vozila med predorom Ljublbno in priključkom Podtabor proti Ljubljani.</p>
+    <p><strong>Delo na cesti</strong></p>
+    <p>Na gorenjski avtocesti bo promet med 11. in 16. uro potekal izmenično enosmerno skozi predor Karavanke.</p>
+
+    IZHOD:
+    Na štajerski avtocesti proti Mariboru je zaradi nesreče zaprt vozni pas med priključkoma Vransko in Šentrupert. Nastal je krajši zastoj. Opozarjamo na nevarnost naleta.
+    Proti Ljubljani je na istem odseku zaradi pokvarjenega vozila oviran promet pred predorom Ločica.
+    Pokvarjeno vozilo ovira promet tudi na gorenjski avtocesti med predorom Ljubno in priključkom Podtabor proti Ljubljani.
+    Od 11-ih do 16-ih bo promet skozi predor Karavanke zaradi del urejen izmenično enosmerno.
+
+
+    ### NASLEDNJI PRIMER ###
+
+    VHOD:
+    
+    <p><strong>Nesreča </strong></p>
+    <p>Na gorenjski avtocesti je na izvozu Šmartno proti Jesenicam oviran promet.</p>
+    <p><strong>Ovire</strong></p>
+    <p>Cesta Bovec - Kobarid je pri Bovcu zaprta zaradi podrtega drevesa.</p>
+    <p><strong>Vreme</strong></p>
+    <p><strong>Burja 1. stopnje</strong>, prepovedan promet za počitniške prikolice, hladilnike in vozila s ponjavami do 8 ton:
+        <br>- Na vipavski hitri cesti med Nanosom in Selom.
+        <br>- Na regionalni cesti med Vipavo in Ajdovščino.
+    </p>
+    <p>Ponekod po Sloveniji megla zmanjšuje vidljivost.</p>
+    <p><strong>Zimske razmere</strong></p>
+    <p>Cesta čez prelaz <strong>Vršič</strong> je zaprta.</p>
+    <p><strong>Delo na cesti</strong></p>
+    <p><strong>Štajerska avtocesta </strong>bo do nedelje do 5. ure zaprta med Vranskim in Blagovico proti Ljubljani.</p>
+    <p><strong>Predvidene popolne zapore, ta vikend:</strong>
+        <br>- <strong>Hitra cesta Razdrto - Vrtojba</strong> bo zaprta v nedeljo med 8. in 10. uro med Šempetrom in Vrtojbo proti Italiji. Obvoz bo po vzporednih cestah med Šempetrom in počivališčem Vrtojba.
+        <br>- <strong>Odpovedali in prestavili so za ta konec tedna predvideno popolno zaporo ceste Brezovica - Podpeč </strong>v Notranjih Goricah pri železniškem nadvozu.
+    </p>
+    <p>Prihodnji teden, predvidoma v sredo, 25. januarja, bodo zaradi del zaprli cesto Dole - Ponikve - Loče, med Ponikvo in Zlatečami.</p>
+
+
+    IZHOD:
+    Na gorenjski avtocesti je na izvozu Šmartno proti Jesenicam oviran promet zaradi nesreče.
+    Cesta Bovec - Kobarid je pri Bovcu zaprta zaradi podrtega drevesa.
+    Burja 1. stopnje ovira promet na vipavski hitri cesti med Nanosom in Selom ter na regionalni cesti med Vipavo in Ajdovščino.
+    Ponekod po Sloveniji megla zmanjšuje vidljivost.
+    Cesta čez prelaz Vršič je zaprta zaradi zimskih razmer.
+    Štajerska avtocesta bo do nedelje do 5. ure zaprta med Vranskim in Blagovico proti Ljubljani.
+    Hitra cesta Razdrto - Vrtojba bo v nedeljo med 8. in 10. uro zaprta med Šempetrom in Vrtojbo proti Italiji. Obvoz bo po vzporednih cestah med Šempetrom in počivališčem Vrtojba.
+    Cesta Brezovica - Podpeč v Notranjih Goricah pri železniškem nadvozu bo zaprta prihodnji teden, predvidoma v sredo, 25. januarja.
+    Cesta Dole - Ponikve - Loče, med Ponikvo in Zlatečami, bo zaprta prihodnji teden, predvidoma v sredo, 25. januarja.
+
+
+    ### NASLEDNJI PRIMER ###
+
+    
+    VHOD:
+    <p><strong>Nesreče</strong></p>
+    <p>Na štajerski avtocesti je zaprt vozni pas med priključkoma Vransko in Šentrupert proti Mariboru. Nastal je zastoj, zamuda 10 - 15 minut.</p>
+    <p><strong>Ovire</strong></p>
+    <p>Na gorenjski avtocesti oviran promet zaradi okvare tovornega vozila med predorom Ljubno in priključkom Podtabor proti Ljubljani.</p>
+    <p><strong>Delo na cesti</strong></p>
+    <p>Na gorenjski avtocesti bo promet med 11. in 16. uro potekal izmenično enosmer
+--------------------------
+
