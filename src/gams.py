@@ -79,6 +79,53 @@ shot_3: str = """
     # "U četvrtak je bila prva polufinalna večer Dore, a komentari na društvenim mrežama ne prestaju. U nedjeljno finale prošli su:",
 prompts = [
     f"""
+    Poziv za generiranje prometnih poročil (RTV Slovenija)
+    Generiraj kratko in strukturirano prometno poročilo v slogu RTV Slovenija na podlagi tabelaričnih prometnih dogodkov (iz preteklih X ur, npr. 3–4 ure).
+    Oblika poročila:
+    ------------------------------------------------------------
+    Prometne informacije       DD. MM. YYYY       HH.MM           2. program
+    
+    Podatki o prometu.
+    
+    <sledi povzetek> 
+    ------------------------------------------------------------
+    
+    Navodila za vsebino:
+    - Povzemi pomembne dogodke: nesreče, zapore cest, živali na vozišču, izredne razmere (burja, tovorna prepoved).
+    - Vključi strukturo stavkov:
+        1. opcija: Cesta in smer + razlog + posledica + odsek
+        2. opcija: Razlog + cesta in smer + posledica + odsek
+    - Prednost imajo stavki, ki vključujejo:
+      - znana cestna imena (avtoceste, razcepi, mesta),
+      - konkretne učinke na promet (zastoji, zapora pasu),
+      - točne lokacije (med priključkoma X in Y).
+    
+    Navodila za slog:
+    - Ne ponavljaj istih ali zelo podobnih informacij.
+    - Združi podobne stavke, obdrži najbolj informativen.
+    - Ne vključuj trivialnih informacij ali običajnih konic, razen če so izredno dolge ali nenavadne.
+    - Vsak stavek naj bo jedrnat in razumljiv za branje v etru.
+    
+    Spodaj sledijo primeri vhodnih podatkov (iz Excela) in ustrezno oblikovanih izhodnih poročil:
+
+    {shot_1}
+
+    ### NASLEDNJI PRIMER ###
+
+    {shot_2}
+
+    ### NASLEDNJI PRIMER ###
+
+    {shot_3}
+
+    ### NASLEDNJI PRIMER ###
+
+    VHOD:
+    {{input}}
+
+    IZHOD:
+    """,
+    f"""
     Si profesionalen poročevalec prometnih informacij.
     Dobil boš nekaj podatkov, ki so bili pridobljeni s spletne strani prometnih informacij.
     Tvoja naloga je da ustvariš kratko prometno poročilo (IZHOD) na podlagi teh podatkov (VHOD).
