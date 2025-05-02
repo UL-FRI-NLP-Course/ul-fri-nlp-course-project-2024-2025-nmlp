@@ -19,14 +19,17 @@ def load_data() -> pd.DataFrame:
         df = pd.concat([df, sheet_df])
     return df
 
-def get_time_window(timestamp: datetime.datetime, hours_before: int = 2, hours_after: int = 2) -> tuple[datetime.datetime, datetime.datetime]:
-    return (timestamp - datetime.timedelta(hours=hours_before), timestamp + datetime.timedelta(hours=hours_after))
+def get_time_window(df: pd.DataFrame, timestamp: datetime.datetime, hours_before: int = 2, hours_after: int = 2, reset_index: bool = True) -> pd.DataFrame:
+    time_from, time_to = (timestamp - datetime.timedelta(hours=hours_before), timestamp + datetime.timedelta(hours=hours_after))
+    filtered: pd.DataFrame = df[(df["Datum"] <= time_to) & (df["Datum"] >= time_from)]
+    if reset_index:
+        filtered = filtered.reset_index(drop=True)
+    return filtered
 
 def main():
     df: pd.DataFrame = load_data()
     timestamp: datetime.datetime = datetime.datetime(2024, 8, 27, 12, 0, 0)
-    time_from, time_to = get_time_window(timestamp)
-    filtered: pd.DataFrame = df[(df["Datum"] <= time_to) & (df["Datum"] >= time_from)]
+    filtered: pd.DataFrame = get_time_window(df, timestamp)
     print(row2str(filtered.iloc[0]))
 
 if __name__ == "__main__":
