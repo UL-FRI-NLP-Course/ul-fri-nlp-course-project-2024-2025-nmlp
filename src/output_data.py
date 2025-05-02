@@ -4,10 +4,12 @@ import re
 
 INPUT_DATA_PATH: str = "data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx"
 
-pd.set_option("display.max_colwidth", None)
-
 def row2str(row: pd.Series) -> str:
-    return re.sub(" +", " ", str(row))
+    old_value: int | None = pd.get_option("display.max_colwidth")
+    pd.set_option("display.max_colwidth", None)
+    text: str = re.sub(" +", " ", str(row))
+    pd.set_option("display.max_colwidth", old_value)
+    return text
 
 def load_data() -> pd.DataFrame:
     df: pd.DataFrame = pd.DataFrame()
