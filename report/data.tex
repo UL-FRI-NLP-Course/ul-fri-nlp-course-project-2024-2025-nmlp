@@ -1,0 +1,62 @@
+\subsection*{Data}
+We are working with traffic news data.
+More specifically, we have a set of traffic news reports that serve as a part of our training data.
+The other part is hidden in the periodically scraped website data that in some way or another corresponds to parts of the traffic news reports.
+The input to our NLP model will be unseen scraped website data, whereas the output will be a report that follows the intended format.
+
+
+\subsubsection*{Models}
+We used an open-source large language model (LLM) named GaMS-27B-Instruct\footnote{https://huggingface.co/cjvt/GaMS-27B-Instruct} to generate new data.
+Since our data is basically completely in Slovenian, we needed an LLM that was trained specifically in this language.
+Technically speaking, it is a fine-tuned version of the Google Gemma2 LLM\footnote{https://huggingface.co/google/gemma-2-27b}, so it performs well both on English and Slovenian.
+
+\subsubsection*{Preprocessing pipeline}
+
+The raw input consists of structured traffic event logs in Excel format provided by the \texttt{promet.si} portal, and human-written traffic reports in RTF format, broadcast by RTV Slovenija. To align these for training and evaluation, we implemented the following preprocessing pipeline:
+
+\paragraph{1. Time-based Filtering.}
+To align structured input data with its corresponding RTF report, we apply a temporal filtering step. Specifically, we extract all rows from the Excel dataset whose timestamps fall within a fixed window \emph{prior} to the timestamp of the selected RTF report (typically 1 to 8 hours). This windowed extraction is necessary because RTV traffic reports do not reflect only newly observed events, but also often reiterate unresolved or ongoing events from previous intervals. For example, a road closure or prolonged congestion may appear in multiple consecutive reports until the situation is resolved. By including several hours of prior data, we ensure that the input context is sufficient to reconstruct both new and persisting traffic conditions reflected in the human-authored report.
+
+\paragraph{2. Cleaning and Normalization.}
+All text fields undergo normalization using HTML stripping (via BeautifulSoup), whitespace collapsing, and newline removal. Timestamp fields are converted to \texttt{datetime} objects for temporal grouping.
+
+\paragraph{3. Sentence Extraction and Deduplication.}
+Each row is processed into individual sentences. Sentences are cleaned and deduplicated using one of several strategies:
+\begin{itemize}
+  \item \textbf{Exact deduplication:} Removes literal duplicates across rows.
+  \item \textbf{Semantic deduplication:} Uses Sentence-BERT embeddings and cosine similarity to group semantically similar sentences ($> 0.7$) and retain a representative.
+\end{itemize}
+
+\paragraph{4. Content Selection Strategies.}
+We evaluate multiple strategies to retain the most relevant information:
+\begin{itemize}
+  \item \textbf{Longest informative sentence:} Keeps the longest sentence within a semantic group.
+  \item \textbf{TF-IDF selection:} Scores sentences using TF-IDF and selects the highest-scoring one per group.
+  \item \textbf{Named entity preference:} Prefers sentences containing domain-specific keywords (e.g., road names, locations, traffic event types).
+\end{itemize}
+
+\paragraph{5. Flat Input Construction.}
+Once the relevant and deduplicated sentences are selected, they are assembled into a single paragraph to be used as the prompt input for language model generation. We explored several formatting strategies to mimic the structure and tone of actual RTV Slovenija traffic broadcasts:
+
+\begin{itemize}
+    \item[\textbf{a)}] \textbf{Basic concatenation.} All selected sentences are simply joined with a space delimiter to form one long paragraph that still includes html tags. This approach ensures full coverage of the input without introducing artificial breaks or sectioning.
+    
+    \item[\textbf{b)}] \textbf{Structured template with RTV header.} The paragraph is prefixed with a timestamp header consistent with RTV Slovenija formatting:
+    \begin{quote}
+    \texttt{Prometne informacije \hspace{1em} DD. MM. YYYY \hspace{1em} HH.MM \hspace{1em} 2. program}
+    \end{quote}
+    followed by a standard opening:
+    \begin{quote}
+    \texttt{Podatki o prometu.}
+    \end{quote}
+    This approach makes the output stylistically and structurally comparable to the ground truth RTF reports, enabling more robust evaluation.
+
+\end{itemize}
+
+The structured variant (b) most closely resembles the output format expected in downstream evaluation and human interpretation. It might be also more suitable for fine-tuning models in tasks such as summarization or report generation.
+
+\paragraph{6. RTF Report Matching.}
+The RTF file closest in time to the target timestamp is parsed and used as the reference summary. Date and time are extracted from the header line using regular expressions.
+
+This preprocessing pipeline enables consistent comparison between structured data and human-written summaries, and prepares high-quality input for evaluation or language model fine-tuning.
+

@@ -4,13 +4,6 @@ One of the key considerations in automating Slovenian traffic news is the availa
 
 A crucial challenge in this domain is balancing between **fine-tuning** and **prompt engineering**. Fine-tuning LLMs on domain-specific text can improve accuracy but requires computational resources and well-annotated data \cite{zhang2022fine}. Prompt engineering, on the other hand, provides a lighter-weight alternative by designing effective input prompts to guide the model’s response \cite{reynolds2021prompt}. For structured and time-sensitive content like traffic news, a hybrid approach may be necessary, combining a base model with well-optimized prompting techniques.
 
-Parthasarathy et al. propose and describe a seven stage pipeline for fine-tuning an LLM that covers everything from data preparation to model evaluation \cite{ultimate2024}.
-It also provides an overview of (parameter-efficient) fine-tuning techniques, enabling the selection of the optimal approach based on specific performance objectives and time efficiency requirements.
-
-Chen and Xiao explore a unique news summary generator that works by utilizing a fine-tuned LLM to generate a pool of structured event patterns, then applying a genetic algorithm on them to heuristically find the best ones and finally using another LLM to generate the summaries from those event patterns \cite{xiao2023enhancing}.
-
-Additionally, context-aware traffic reporting can benefit from external data sources, such as live weather updates, public holiday schedules, and road congestion analytics.
-Studies have indicated that integrating real-time sensor data and probabilistic event modelling improves the predictive accuracy of automated reports \cite{schelter2019automated}.
-One option to explore is to include such data in the prompt at runtime, resembling a retrieval-augmented generation (RAG) chain approach, only with live data instead of extensive documents.
+Additionally, context-aware traffic reporting can benefit from external data sources, such as live weather updates, public holiday schedules, and road congestion analytics. Studies have indicated that integrating real-time sensor data and probabilistic event modelling improves the predictive accuracy of automated reports \cite{schelter2019automated}.
 
 Based on these insights, the following sections analyse the provided structured dataset of Slovenian traffic news, examining patterns in report generation and urgency to inform an AI-based automation approach.

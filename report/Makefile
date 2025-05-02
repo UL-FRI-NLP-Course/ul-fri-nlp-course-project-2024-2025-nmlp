@@ -3,10 +3,10 @@ BIBTEX=bibtex
 
 .PHONY: %
 %: %.tex
-	$(LATEX) $< && \
+	$(LATEX) --shell-escape $< && \
 	$(BIBTEX) $@ && \
-	$(LATEX) $< && \
-	$(LATEX) $<
+	$(LATEX) --shell-escape $< && \
+	$(LATEX) --shell-escape $<
 
 .PHONY: clean
 clean:

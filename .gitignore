@@ -3,6 +3,7 @@
 *.out
 *.bbl
 *.blg
+**/*minted*/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
