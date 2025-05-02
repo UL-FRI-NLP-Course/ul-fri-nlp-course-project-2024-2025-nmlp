@@ -208,6 +208,31 @@ def find_closest_rtf_and_extract(base_dir, target_datetime):
         return best_match
     return None, ""
 
+def create_flat_input(input='filtered_traffic_cleaned.xlsx', output='flat_prompt_input.txt', function=group_unique_semantic_informative, from_time=None):
+    df = pd.read_excel(input)
+
+    # Clean & flatten
+    df["Datum"] = pd.to_datetime(df["Datum"])
+    text_columns = df.columns.difference(["Datum"])
+    for col in text_columns:
+        df[col] = df[col].apply(clean_text)
+
+    combined_series = df[text_columns].apply(extract_unique_sentences, axis=1)
+    flat_body = function(combined_series)
+
+    # Format header based on from_time
+    if from_time is None:
+        from_time = df["Datum"].min()
+    header = f"Prometne informacije       {from_time.strftime('%d. %m. %Y')}   \t   {from_time.strftime('%H.%M')}           2. program"
+
+    full_text = f"{header}\n\nPodatki o prometu.\n\n{flat_body}"
+
+    with open(output, "w", encoding="utf-8") as f:
+        f.write(full_text)
+
+    print(f"Saved flat input to {output}")
+    return full_text
+
 def prepare_prompt_from_datetime(
     timestamp_str="2022-01-30 00:00:00",
     hours_back=3,
@@ -225,7 +250,7 @@ def prepare_prompt_from_datetime(
     rtf_file, rtf_text = find_closest_rtf_and_extract(rtf_base, target_time)
     if not rtf_file:
         print("No RTF file found.")
-        return
+        return "",""
 
     print(f"Closest RTF: {rtf_file}")
 
@@ -237,21 +262,53 @@ def prepare_prompt_from_datetime(
 
     # Step 4: Clean and group the Excel
     clean_excel(input=temp_excel, output=temp_cleaned)
-    create_prompt_input(input=temp_cleaned, output=prompt_output, function=grouping_fn)
+    # create_prompt_input(input=temp_cleaned, output=prompt_output, function=grouping_fn)
+    flat_input = create_flat_input(input=temp_cleaned, output="flat_prompt_input.txt", function=grouping_fn, from_time=from_time)
+
 
     print(f"\nFinal prompt-input saved to {prompt_output}")
     print(f"RTF output (should match that time):\n\n---\n{rtf_text}\n---\n")
+    return flat_input, rtf_text
 
 
 
-prepare_prompt_from_datetime(
-    timestamp_str="2022-01-30 15:30:00",
-    hours_back=8
-)
 
+def test_preprocessing_strategies():
+    strategies = [
+        group_unique_sentences,
+        group_unique_semantic_informative,
+        group_tf_idf_informative,
+        group_with_named_entity_preference
+    ]
+    for fn in strategies:
+        for hours in [1, 2, 3, 4, 6, 8]:
+            print(f"== Testing {fn.__name__} with {hours}h window ==")
+            prompt_input, rtf_output = prepare_prompt_from_datetime(
+                timestamp_str="2022-01-30 15:30:00",
+                hours_back=hours,
+                grouping_fn=fn
+            )
+            score = compute_similarity_score(prompt_input, rtf_output)
+            print(f"{fn.__name__} @ {hours}h => Similarity: {score:.4f}\n")
 
+# test_preprocessing_strategies()
+
+# Example usage:
 # extract_excel_by_date()
 # extract_rtf()
 # clean_excel()
 # create_prompt_input(output='group_semantic.xlsx', function=group_unique_semantic)
 # create_prompt_input(output='group_informative.xlsx', function=group_unique_semantic_informative)
+# prepare_prompt_from_datetime(
+#     timestamp_str="2022-01-30 15:30:00",
+#     hours_back=8
+# )
+
+prompt_input, rtf_output = prepare_prompt_from_datetime(
+    timestamp_str="2022-01-30 15:30:00",
+    hours_back=2,
+    grouping_fn=group_unique_semantic_informative
+)
+
+score = compute_similarity_score(prompt_input, rtf_output)
+print(f"Similarity: {score:.4f}\n")

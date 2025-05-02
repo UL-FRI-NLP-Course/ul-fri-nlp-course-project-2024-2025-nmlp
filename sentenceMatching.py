@@ -1,8 +1,16 @@
 from sentence_transformers import SentenceTransformer, util
 import re
 import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')  # lightweight model for semantic similarity
+
+def compute_similarity_score(generated, reference):
+    emb1 = model.encode(generated, convert_to_tensor=True)
+    emb2 = model.encode(reference, convert_to_tensor=True)
+    return util.cos_sim(emb1, emb2).item()
+
 def group_unique_semantic(series, similarity_threshold=0.7):
     """
     Groups sentences based on semantic similarity.
@@ -66,3 +74,68 @@ def group_unique_semantic_informative(series, similarity_threshold=0.7):
         used.update(group)
 
     return " ".join(keep)
+
+def group_tf_idf_informative(series, similarity_threshold=0.7):
+    # Step 1: Flatten and clean
+    all_sentences = []
+    for text in series:
+        all_sentences.extend(re.split(r'(?<=[.!?])\s+', text))
+    sentences = [s.strip() for s in all_sentences if s.strip()]
+    if not sentences:
+        return ""
+
+    # Step 2: Embed
+    embeddings = model.encode(sentences, convert_to_tensor=True)
+
+    # Step 3: TF-IDF
+    tfidf = TfidfVectorizer().fit(sentences)
+    scores = tfidf.transform(sentences).sum(axis=1).A1
+
+    # Step 4: Group & Select
+    used = set()
+    result = []
+    for i in range(len(sentences)):
+        if i in used:
+            continue
+        sims = util.cos_sim(embeddings[i], embeddings)[0]
+        group = [j for j in range(len(sentences)) if sims[j] > similarity_threshold]
+        best_idx = max(group, key=lambda j: scores[j])
+        result.append(sentences[best_idx])
+        used.update(group)
+    return " ".join(result)
+
+# TODO: add more keywords to the list
+road_keywords = [
+    "avtocesta", "hitra cesta", "glavna cesta", "regionalna cesta", "Ljubljana", "Maribor",
+    "Karavanke", "Koper", "Obrežje", "Dragučova", "Slivnica", "Gorenjska", "Štajerska",
+    "Dolenjska", "Pomurska", "Podravska", "Razcep", "uvoz", "izvoz", "zaprta", "zastoj",
+    "obvoznica", "delna zapora", "popravilo", "vzdrževanje", "dela na cesti",
+    "prometno obvestilo", "prometno poročilo", "prometne informacije"
+]
+
+model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+
+def group_with_named_entity_preference(series, similarity_threshold=0.7):
+    all_sentences = []
+    for text in series:
+        all_sentences.extend(re.split(r'(?<=[.!?])\s+', text))
+    sentences = [s.strip() for s in all_sentences if s.strip()]
+    if not sentences:
+        return ""
+
+    embeddings = model.encode(sentences, convert_to_tensor=True)
+
+    def priority_score(sentence):
+        return sum(1 for kw in road_keywords if kw.lower() in sentence.lower())
+
+    used = set()
+    result = []
+    for i in range(len(sentences)):
+        if i in used:
+            continue
+        sims = util.cos_sim(embeddings[i], embeddings)[0]
+        group = [j for j in range(len(sentences)) if sims[j] > similarity_threshold]
+        best_idx = max(group, key=lambda j: priority_score(sentences[j]))
+        result.append(sentences[best_idx])
+        used.update(group)
+    return " ".join(result)
