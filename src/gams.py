@@ -98,6 +98,13 @@ prompts = [
     ### NASLEDNJI PRIMER ###
 
     VHOD:
+    {{input}}
+
+    IZHOD:
+    """,
+]
+
+input: str = """
     <p><strong>Ovire</strong></p>
     <p>Na štajerski avtocesti je zaradi okvare vozila oviran promet na zaviralnem pasu pred izvozom Blagovica iz smeri Ljubljane.</p>
     <p>Na primorski avtocesti je zaradi okvare vozila oviran promet med razcepom Nanos in priključkom Senožeče proti Kopru.</p>
@@ -115,10 +122,9 @@ prompts = [
         <br>- na gorenjski avtocesti, uvoz Šentvid s Celovške ceste proti Kosezam in uvoz Podutik proti Karavankam.
     </p>
     <p>V Domžalah je zaprta Virska cesta, med Ljubljansko cesto in Podrečjem. Do 10. aprila bo promet preko priključka Domžale proti Kamniku preusmerjen na lokalne ceste.</p>
+"""
 
-    IZHOD:
-    """,
-]
+prompts = [prompt.format(input=input) for prompt in prompts]
 
 sequences = pline(
     prompts,
