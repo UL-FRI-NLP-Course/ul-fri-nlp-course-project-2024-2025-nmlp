@@ -36,6 +36,7 @@ def main():
                 "timestamp": datetime.datetime(year=int(year) if len(year) > 2 else (2000+int(year)), month=int(month), day=int(day), hour=int(hour), minute=int(minute), second=0),
                 "header_prefix": prefix,
                 "header_postfix": postfix,
+                "header_original": header,
                 "body": body,
                 "filename": re.sub(PATH_TO_RTFS, "", filename),
             })
