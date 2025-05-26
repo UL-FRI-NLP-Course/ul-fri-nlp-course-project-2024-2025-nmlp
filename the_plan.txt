@@ -1,0 +1,19 @@
+data preparation
+    DP1: finding most similar output data point to given input (anze)
+    DP2: construction of completely overlapping io pairs (jan)
+fine-tuning (FT)
+    figure out how it even works
+    run FT and get weights for DP1
+    run FT and get weights for DP2
+evaluation
+    construct evaluation model/metric
+        how well the output matches the given input
+        how well the output followes guidelines (PROMET.docx)
+        e.g. use GPT for this task
+    evaluation of baseline results
+        i.e. LLM + prompt engineering, without fine-tuning (FT)
+    evaluation of FT results
+        for DP1
+        for DP2
+report
+    ...
