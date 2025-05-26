@@ -11,3 +11,10 @@ striprtf==0.0.29
 cdifflib # standrad library
 sentence-transformers==4.1.0 # for sentence similarity
 scikit-learn==1.6.0
+# for evaluation
+nltk
+rouge-score
+python-Levenshtein
+scikit-learn
+openai
+
