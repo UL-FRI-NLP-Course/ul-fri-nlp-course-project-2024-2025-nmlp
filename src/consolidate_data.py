@@ -5,13 +5,13 @@ import pandas as pd
 import Levenshtein
 import src.input_data
 import src.output_data
-from spacy.tokens import Doc, Token
+import src.utils
+from spacy.tokens import Doc
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from collections import Counter
 
 MODEL_SPACY: str = "sl_core_news_lg"
-POS_WHITELIST: list[str] = ["VERB", "ADJ", "NOUN", "PROPN"]
 MIN_MATCHING_WORDS_PER_PARAGRAPH: int = 2
 MIN_MATCHING_PARAGRAPHS: int = 2
 REGEX_BODY_START: re.Pattern = re.compile(r"^\s*(podatki\s*o\s*promet[u]?|(nujn[ae])?\s*prometn[ae]\s*informacij[ae]\s*)[\.:;]*\s*", flags=re.IGNORECASE)
@@ -68,16 +68,6 @@ def check_match(str1: str, str2: str) -> bool:
 def strip_body(text: str) -> str:
     return REGEX_BODY_START.sub("", text)
 
-# Force keep capitalization for proper nouns
-def get_lemma_keep_capitalization(token: Token) -> str:
-    if token.lemma_ and len(token.lemma_) > 0 and token.pos_ == "PROPN":
-        return token.lemma_[0].upper() + token.lemma_[1:]
-    return token.lemma_
-
-def normalize_str(text: str) -> str:
-    doc: Doc = nlp(text)
-    return " ".join(get_lemma_keep_capitalization(token) for token in doc if token.pos_.upper() in POS_WHITELIST)
-
 def remove_unwanted_tag(soup: BeautifulSoup, tag_name: str):
     tags = soup.find(tag_name)
     if tags and hasattr(tags, "children"):
@@ -94,7 +84,7 @@ def excel_row_to_paragraphs(row: pd.Series) -> tuple[list[str], list[str]]:
         soup: BeautifulSoup = BeautifulSoup(str(row[col]), "html.parser")
         remove_unwanted_tag(soup, "a")
         for p in soup.find_all("p"):
-            paragraphs.append(normalize_str(p.get_text()))
+            paragraphs.append(src.utils.normalize_str(p.get_text()))
             paragraphs_unprocessed.append(f"<p>{p.get_text()}</p>")
     return paragraphs_unprocessed, paragraphs
 
@@ -141,7 +131,7 @@ def main():
     io_pairs: list[dict[str, str]] = []
     for _, row_rtf in df_rtfs.iterrows():
         paragraphs_rtf_unprocessed: list[str] = re.split(r"\s*\n+\s*", row_rtf.body)
-        paragraphs_rtf = list(map(normalize_str, paragraphs_rtf_unprocessed))
+        paragraphs_rtf = list(map(src.utils.normalize_str, paragraphs_rtf_unprocessed))
         timestamp: datetime.datetime = row_rtf.timestamp.to_pydatetime()
         reports: pd.DataFrame = src.input_data.get_time_window(df_excel, timestamp, hours_before=4, hours_after=1)
         max_matching_paragraphs: int = 0
