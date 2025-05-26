@@ -12,5 +12,9 @@ def get_lemma_keep_capitalization(token: Token) -> str:
     return token.lemma_
 
 def normalize_str(text: str) -> str:
+    """
+    Input: "Anton Tomaž Linhart je slovenski dramatik, pesnik, zgodovinar in šolnik. Rodil se je 11. decembra 1756 v meščanski družini v Radovljici"
+    Output: "Anton Tomaž Linhart slovenski dramatik pesnik zgodovinar šolnik roditi december meščanski družina Radovljica"
+    """
     doc: Doc = nlp(text)
     return " ".join(get_lemma_keep_capitalization(token) for token in doc if token.pos_.upper() in POS_WHITELIST)
