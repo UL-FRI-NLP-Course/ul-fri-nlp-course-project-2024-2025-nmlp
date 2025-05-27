@@ -6,18 +6,113 @@ import Levenshtein
 import src.input_data
 import src.output_data
 import src.utils
+import numpy.typing as npt
+from src.output_data import OutputParagraph, OutputReport
+from src.input_data import InputParagraph, InputReport
 from spacy.tokens import Doc
-from bs4 import BeautifulSoup
-from bs4.element import Tag
 from collections import Counter
+from typing import override
+from sentence_transformers import SentenceTransformer
 
-MODEL_SPACY: str = "sl_core_news_lg"
+MODEL_ST: str = "paraphrase-multilingual-MiniLM-L12-v2"
 MIN_MATCHING_WORDS_PER_PARAGRAPH: int = 2
 MIN_MATCHING_PARAGRAPHS: int = 2
 REGEX_BODY_START: re.Pattern = re.compile(r"^\s*(podatki\s*o\s*promet[u]?|(nujn[ae])?\s*prometn[ae]\s*informacij[ae]\s*)[\.:;]*\s*", flags=re.IGNORECASE)
 REGEX_ONLY_CHARS: re.Pattern = re.compile(r"[^a-zčšž]", flags=re.IGNORECASE)
 
-nlp: spacy.language.Language = spacy.load("sl_core_news_lg")
+nlp: spacy.language.Language = spacy.load(src.utils.MODEL_SPACY)
+embeddings_model: SentenceTransformer = SentenceTransformer(MODEL_ST)
+
+class IOParagraph():
+    par_in: InputParagraph
+    par_out: OutputParagraph
+    def __init__(self, par_in: InputParagraph, par_out: OutputParagraph):
+        self.par_in = par_in
+        self.par_out = par_out
+
+class MatchStats():
+    par_in: InputParagraph
+    par_out: OutputParagraph
+    matching_words: int
+    matching_proper_nouns: int
+    similarity_score: float
+    def __init__(self, par_in: InputParagraph, par_out: OutputParagraph, matching_words: int, matching_proper_nouns: int, similarity_score: float) -> None:
+        self.par_in = par_in
+        self.par_out = par_out
+        self.matching_words = matching_words
+        self.matching_proper_nouns = matching_proper_nouns
+        self.similarity_score = similarity_score
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, MatchStats):
+            return False
+        return ((self.matching_words == other.matching_words) and (self.matching_proper_nouns == other.matching_proper_nouns) and (self.similarity_score == other.similarity_score))
+    def __lt__(self, other):
+        if not isinstance(other, MatchStats):
+            return False
+        if self.matching_words > other.matching_words:
+            return True
+        if self.matching_proper_nouns > other.matching_proper_nouns:
+            return True
+        return (self.similarity_score > other.similarity_score)
+    def is_match(self) -> bool:
+        # At least this fraction of words from one paragraph must have corresponding word in the other paragraph
+        if self.matching_words >= 0.4 * min(self.par_out.get_word_count(), self.par_in.get_word_count()):
+            return True
+        if self.matching_words < 0.15 * min(self.par_out.get_word_count(), self.par_in.get_word_count()):
+            return False
+        # At least some number of proper nouns must match AND a fraction of both paragraphs' proper nouns as well
+        if self.matching_proper_nouns >= max(3, 0.4 * max(self.par_in.get_propn_count(), self.par_out.get_propn_count())):
+            return True
+        if self.matching_proper_nouns < 0.3 * (max(self.par_in.get_propn_count(), self.par_out.get_propn_count()) - 2):
+            return False
+        # TODO: add similairty score threshold here
+        return False
+    @override
+    def __repr__(self) -> str:
+        return self.__str__()
+    @override
+    def __str__(self) -> str:
+        return f"""
+MatchStats(
+    par_in: {self.par_in}
+    par_out: {self.par_out}
+    matching_words: {self.matching_words}
+    matching_proper_nouns: {self.matching_proper_nouns}
+    similarity_score: {self.similarity_score}
+)
+        """.strip()
+
+def count_matches_levenshtein(str1: str, str2: str, max_distance: int = 1) -> int:
+    str1, str2 = str1.lower(), str2.lower()
+    words_1: list[str] = re.split(r"\s+", str1)
+    words_2: list[str] = re.split(r"\s+", str2)
+    indexes_used: list[int] = []
+    matches: int = 0
+    for word_1 in words_1:
+        for j, word_2 in enumerate(words_2):
+            if j in indexes_used:
+                continue
+            if Levenshtein.distance(word_1, word_2) <= max_distance:
+                matches += 1
+                indexes_used.append(j)
+    return matches
+
+def count_matches_propn(str1: str, str2: str) -> int:
+    doc1: Doc = nlp(str1)
+    doc2: Doc = nlp(str2)
+    propn1: list[str] = [token.text for token in doc1 if token.pos_ == "PROPN"]
+    propn2: list[str] = [token.text for token in doc2 if token.pos_ == "PROPN"]
+    c1: Counter = Counter(propn1)
+    c2: Counter = Counter(propn2)
+    return sum(min(c1[k], c2[k]) for k in c1.keys() if k in c2.keys())
+
+def get_match_stats(par_in: InputParagraph, par_out: OutputParagraph) -> MatchStats:
+    matching_words: int = count_matches_levenshtein(par_in.get_normalized(), par_out.get_normalized())
+    matching_propn: int = count_matches_propn(par_in.get_normalized(), par_out.get_normalized())
+    emb1: npt.NDArray = embeddings_model.encode(par_in.raw, convert_to_numpy=True)
+    emb2: npt.NDArray = embeddings_model.encode(par_out.raw, convert_to_numpy=True)
+    similarity_score: float = embeddings_model.similarity(emb1, emb2).item()
+    return MatchStats(par_in, par_out, matching_words, matching_propn, similarity_score)
 
 # PROPN – Proper noun: a noun that refers to a specific person, place, or organization, such as “Microsoft” or “John”
 # source: https://www.pythonprog.com/spacy-part-of-speech-tags/
@@ -68,26 +163,6 @@ def check_match(str1: str, str2: str) -> bool:
 def strip_body(text: str) -> str:
     return REGEX_BODY_START.sub("", text)
 
-def remove_unwanted_tag(soup: BeautifulSoup, tag_name: str):
-    tags = soup.find(tag_name)
-    if tags and hasattr(tags, "children"):
-        for tag in tags.children:
-            if isinstance(tag, Tag):
-                tag.decompose()
-
-def excel_row_to_paragraphs(row: pd.Series) -> tuple[list[str], list[str]]:
-    relevant_cols: list[str] = [col for col in row.keys() if col.startswith("Content") and isinstance(row[col], str)]
-    relevant_cols = sorted(relevant_cols)
-    paragraphs: list[str] = []
-    paragraphs_unprocessed: list[str] = []
-    for col in relevant_cols:
-        soup: BeautifulSoup = BeautifulSoup(str(row[col]), "html.parser")
-        remove_unwanted_tag(soup, "a")
-        for p in soup.find_all("p"):
-            paragraphs.append(src.utils.normalize_str(p.get_text()))
-            paragraphs_unprocessed.append(f"<p>{p.get_text()}</p>")
-    return paragraphs_unprocessed, paragraphs
-
 def get_matches(str_1: str, str_2: str) -> dict[str, int]:
     """
     Example:
@@ -124,29 +199,30 @@ def get_paragraph_matches_indexes(paragraphs_rtf: list[str], paragraphs_excel: l
             matches_indexes.append(match_indexes)
     return matches_indexes
 
+def get_io_pairs(rtf: OutputReport, excels: list[InputReport]) -> list[IOParagraph]:
+    pars_in: list[InputParagraph] = list(set(par for excel in excels for par in excel.paragraphs))
+    io_pairs: list[IOParagraph] = []
+    for par_out in rtf.paragraphs:
+        best_match: MatchStats = get_match_stats(pars_in[0], par_out)
+        for par_in in pars_in[1:]:
+            match_stats: MatchStats = get_match_stats(par_in, par_out)
+            if match_stats > best_match:
+                best_match = match_stats
+        if best_match.is_match():
+            io_pairs.append(IOParagraph(best_match.par_in, best_match.par_out))
+    return io_pairs
+
 def main():
     df_rtfs: pd.DataFrame = src.output_data.load_structured()
     df_rtfs["body"] = df_rtfs["body"].apply(strip_body)
     df_excel: pd.DataFrame = src.input_data.load_data()
-    io_pairs: list[dict[str, str]] = []
+    io_pairs: list[IOParagraph] = []
     for _, row_rtf in df_rtfs.iterrows():
-        paragraphs_rtf_unprocessed: list[str] = re.split(r"\s*\n+\s*", row_rtf.body)
-        paragraphs_rtf = list(map(src.utils.normalize_str, paragraphs_rtf_unprocessed))
+        rtf: OutputReport = OutputReport(row_rtf)
         timestamp: datetime.datetime = row_rtf.timestamp.to_pydatetime()
-        reports: pd.DataFrame = src.input_data.get_time_window(df_excel, timestamp, hours_before=4, hours_after=1)
-        max_matching_paragraphs: int = 0
-        input_str, output_str = "", ""
-        for _, report in reports.iterrows():
-            paragraphs_excel_unprocessed, paragraphs_excel = excel_row_to_paragraphs(report)
-            matches_indexes: list[tuple[int, int]] = get_paragraph_matches_indexes(paragraphs_rtf, paragraphs_excel)
-            matches_indexes = [(index_rtf, index_excel) for index_rtf, index_excel in matches_indexes if check_match(paragraphs_rtf[index_rtf], paragraphs_excel[index_excel])]
-            if len(matches_indexes) > max_matching_paragraphs:
-                max_matching_paragraphs = len(matches_indexes)
-                input_str = "\n".join(paragraphs_excel_unprocessed[index_excel] for _, index_excel in matches_indexes)
-                output_str = row_rtf.header_original + "\n\n" + "\n\n".join(paragraphs_rtf_unprocessed[index_rtf] for index_rtf, _ in matches_indexes)
-        if input_str and output_str and max_matching_paragraphs >= MIN_MATCHING_PARAGRAPHS:
-            io_pairs.append({"input": input_str, "output": output_str})            
-    df_io_pairs: pd.DataFrame = pd.DataFrame(io_pairs)
+        df_excel_subset: pd.DataFrame = src.input_data.get_time_window(df_excel, timestamp, hours_before=4, hours_after=1)
+        excels: list[InputReport] = list(InputReport(row_excel) for _, row_excel in df_excel_subset.iterrows())
+        io_pairs.extend(get_io_pairs(rtf, excels))
 
 if __name__ == "__main__":
     main()

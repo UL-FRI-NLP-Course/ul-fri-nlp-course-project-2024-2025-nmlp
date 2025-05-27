@@ -3,12 +3,24 @@ import glob
 import datetime
 import itertools
 import pandas as pd
+import src.utils
 from typing import Any
 from striprtf.striprtf import rtf_to_text
 
 PATH_TO_RTFS: str = "RTVSlo/Podatki - rtvslo.si"
 OUTPUT_FILE: str = "data/rtfs_merged.jsonl"
 HEADER_REGEX: re.Pattern = re.compile(r"^([^0-9]*?)\s*([0-9]+)\.\s*([0-9]+)\.\s*([0-9]+)\s*([0-9]+)\.([0-9]+)\s*(.*?)$")
+
+class OutputParagraph(src.utils.Paragraph):
+    pass
+
+class OutputReport():
+    """
+    This represents a single report (one RTF file)
+    """
+    paragraphs: list[OutputParagraph]
+    def __init__(self, row: pd.Series) -> None:
+        self.paragraphs = list(OutputParagraph(raw_paragraph) for raw_paragraph in re.split(r"\s*\n+\s*", row.body))
 
 def clean_str(to_be_cleaned: str) -> str:
     return re.sub(r"\x00", "", to_be_cleaned).strip()

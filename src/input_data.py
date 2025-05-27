@@ -1,8 +1,36 @@
 import pandas as pd
 import datetime
 import re
+import src.utils
+from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 INPUT_DATA_PATH: str = "data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx"
+
+class InputParagraph(src.utils.Paragraph):
+    pass
+
+class InputReport():
+    """
+    This represents a single report (one scrape or one excel line)
+    """
+    paragraphs: list[InputParagraph]
+    def __init__(self, row: pd.Series) -> None:
+        relevant_cols: list[str] = [col for col in row.keys() if col.startswith("Content") and isinstance(row[col], str)]
+        relevant_cols = sorted(relevant_cols)
+        self.paragraphs = []
+        for col in relevant_cols:
+            soup: BeautifulSoup = BeautifulSoup(str(row[col]), "html.parser")
+            # remove_unwanted_tag(soup, "a")
+            for p in soup.find_all("p"):
+                self.paragraphs.append(InputParagraph(p.get_text()))
+
+def remove_unwanted_tag(soup: BeautifulSoup, tag_name: str):
+    tags = soup.find(tag_name)
+    if tags and hasattr(tags, "children"):
+        for tag in tags.children:
+            if isinstance(tag, Tag):
+                tag.decompose()
 
 def row2str(row: pd.Series) -> str:
     old_value: int | None = pd.get_option("display.max_colwidth")
