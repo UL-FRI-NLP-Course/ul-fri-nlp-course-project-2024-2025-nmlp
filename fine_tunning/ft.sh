@@ -7,15 +7,14 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
-#SBATCH --nodes=1
 
 # module purge
 # source ~/miniconda3/etc/profile.d/conda.sh
 # conda activate gams
 
 module purge
-module load Python/3.12 bzip2
-source /d/hpc/projects/onj_fri/nmlp/venv/bin/activate
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate gams
 
 
 echo "Starting GaMS fine-tuning job"
