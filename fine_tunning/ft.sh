@@ -24,9 +24,7 @@ echo "Running on node: $(hostname)"
 # Ensure Hugging Face cache uses scratch if needed
 # export TRANSFORMERS_CACHE=$SLURM_TMPDIR/hf_cache
 
-python -c "import transformers; print('✅ Transformers is installed')"
-
 # Run your script
-python gams.py
+srun python fine_tunning.py
 
 echo "Job finished"
