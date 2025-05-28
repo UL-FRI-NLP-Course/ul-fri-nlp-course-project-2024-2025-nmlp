@@ -1,4 +1,5 @@
 import re
+import json
 import spacy
 import datetime
 import pandas as pd
@@ -266,30 +267,29 @@ def main():
     df_rtfs: pd.DataFrame = src.output_data.load_structured()
     df_rtfs["body"] = df_rtfs["body"].apply(strip_body)
     df_excel: pd.DataFrame = src.input_data.load_data()
-    io_pairs: list[dict[str, str]] = []
     df_rtfs = df_rtfs.iloc[:100]
-    counter_lock: threading.Lock = threading.Lock()
+    lock: threading.Lock = threading.Lock()
     counter: int = 0
     total: int = len(df_rtfs)
-    def process_rtf(tup: tuple[int, pd.Series]):
-        _, row_rtf = tup
-        rtf: OutputReport = OutputReport(row_rtf)
-        timestamp: datetime.datetime = row_rtf.timestamp.to_pydatetime()
-        df_excel_subset: pd.DataFrame = src.input_data.get_time_window(df_excel, timestamp, hours_before=4, hours_after=1)
-        excels: list[InputReport] = list(InputReport(row_excel) for _, row_excel in df_excel_subset.iterrows())
-        io_pairs_new: list[IOParagraph] = get_io_pairs(rtf, excels)
-        input_joined: str = " ".join(ensure_punctuation(io_pair.par_in.raw) for io_pair in io_pairs_new)
-        output_joined: str = " ".join(ensure_punctuation(io_pair.par_out.raw) for io_pair in io_pairs_new)
-        nonlocal counter
-        with counter_lock:
-            if len(io_pairs_new) > 0:
-                io_pairs.append({"in": input_joined, "out": output_joined})
-            counter += 1
-            print(f"[{counter}/{total}]")
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        executor.map(process_rtf, df_rtfs.iterrows())
-    df_out: pd.DataFrame = pd.DataFrame(io_pairs)
-    df_out.to_json(OUTPUT_PATH, orient="records", lines=True, force_ascii=False)
+    with open(OUTPUT_PATH, "wt") as file:
+        def process_rtf(tup: tuple[int, pd.Series]):
+            _, row_rtf = tup
+            rtf: OutputReport = OutputReport(row_rtf)
+            timestamp: datetime.datetime = row_rtf.timestamp.to_pydatetime()
+            df_excel_subset: pd.DataFrame = src.input_data.get_time_window(df_excel, timestamp, hours_before=4, hours_after=1)
+            excels: list[InputReport] = list(InputReport(row_excel) for _, row_excel in df_excel_subset.iterrows())
+            io_pairs_new: list[IOParagraph] = get_io_pairs(rtf, excels)
+            input_joined: str = " ".join(ensure_punctuation(io_pair.par_in.raw) for io_pair in io_pairs_new)
+            output_joined: str = " ".join(ensure_punctuation(io_pair.par_out.raw) for io_pair in io_pairs_new)
+            nonlocal counter
+            with lock:
+                if len(io_pairs_new) > 0:
+                    file.write(json.dumps({"vhod": input_joined, "izhod": output_joined}, ensure_ascii=False) + "\n")
+                    file.flush()
+                counter += 1
+                print(f"[{counter}/{total}]")
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            executor.map(process_rtf, df_rtfs.iterrows())
 
 if __name__ == "__main__":
     main()
