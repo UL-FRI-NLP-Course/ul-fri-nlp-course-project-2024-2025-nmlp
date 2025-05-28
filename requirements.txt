@@ -6,7 +6,6 @@ python-Levenshtein
 spacy
 
 # Tools specifically for running LLMs
-# You will also need torch for your specific platform
 transformers
 accelerate
 protobuf
