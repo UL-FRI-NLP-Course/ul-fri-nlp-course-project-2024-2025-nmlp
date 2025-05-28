@@ -176,7 +176,8 @@ prompts = [prompt.format(input=input) for prompt in prompts]
 sequences = pline(
     prompts,
     max_new_tokens=512,
-    num_return_sequences=1
+    num_return_sequences=1,
+    return_full_text=False,
 )
 
 for seq in sequences:
