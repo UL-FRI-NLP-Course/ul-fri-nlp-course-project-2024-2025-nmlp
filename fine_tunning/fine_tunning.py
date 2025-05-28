@@ -2,14 +2,17 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, Trainer, TrainingA
 from peft import get_peft_model, LoraConfig, TaskType, PeftModel, PeftConfig
 from datasets import Dataset
 import torch
+import json
 import os
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Running on: {device}", flush=True)
 
 # ---------- CONFIGURATION ----------
-MODEL_NAME = "cjvt/GaMS-2B"
-PEFT_DIR = "./PEFT/v1"
+# MODEL_NAME = "cjvt/GaMS-2B"
+MODEL_NAME = "cjvt/GaMS-27B-Instruct"
+PEFT_DIR = "/d/hpc/projects/onj_fri/nmlp/PEFT/"
+IO_PAIRS_PATH = "/d/hpc/projects/onj_fri/nmlp/dp2.jsonl"
 
 if not os.path.exists(PEFT_DIR):
     os.makedirs(PEFT_DIR, exist_ok=True)
@@ -39,6 +42,22 @@ else:
     model = get_peft_model(base_model, lora_config)
     model.print_trainable_parameters()
 
+# ---------- Actual Dataset ----------
+def get_dataset():
+    data = {
+        "input": [],
+        "output": [],
+    }
+    with open(IO_PAIRS_PATH, "rt") as f:
+        i = 0
+        for line in f:
+            data_point = json.loads(line)
+            data["input"].append(data_point["vhod"])
+            data["output"].append(data_point["izhod"])
+            i += 1
+    print(f"Loaded {i} input-output pairs from {IO_PAIRS_PATH}")
+    return Dataset.from_dict(data)
+
 # ---------- Dummy Dataset ----------
 data = {
     "input": [
@@ -50,7 +69,8 @@ data = {
         "Na ljubljanski obvoznici so zastoji zaradi nesreče pri razcepu Kozarje.",
     ]
 }
-dataset = Dataset.from_dict(data)
+# dataset = Dataset.from_dict(data)
+dataset = get_dataset()
 
 # ---------- Preprocessing ----------
 def preprocess(example):
@@ -66,7 +86,7 @@ dataset = dataset.map(preprocess)
 
 # ---------- Training Args ----------
 training_args = TrainingArguments(
-    output_dir="./outputs",
+    output_dir=f"{PEFT_DIR}/outputs",
     per_device_train_batch_size=1,
     num_train_epochs=3,
     logging_dir="./logs",
