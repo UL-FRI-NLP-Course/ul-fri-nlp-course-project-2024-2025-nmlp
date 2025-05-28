@@ -21,7 +21,7 @@ MIN_MATCHING_WORDS_PER_PARAGRAPH: int = 2
 MIN_MATCHING_PARAGRAPHS: int = 2
 REGEX_BODY_START: re.Pattern = re.compile(r"^\s*(podatki\s*o\s*promet[u]?|(nujn[ae])?\s*prometn[ae]\s*informacij[ae]\s*)[\.:;]*\s*", flags=re.IGNORECASE)
 REGEX_ONLY_CHARS: re.Pattern = re.compile(r"[^a-zčšž]", flags=re.IGNORECASE)
-OUTPUT_PATH: str = "./train.jsonl"
+OUTPUT_PATH: str = "./dp2.jsonl"
 MAX_WORKERS: int = 16
 
 nlp: spacy.language.Language = spacy.load(src.utils.MODEL_SPACY)
