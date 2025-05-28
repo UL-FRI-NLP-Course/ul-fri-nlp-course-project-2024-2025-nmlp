@@ -11,7 +11,7 @@ from src.output_data import OutputParagraph, OutputReport
 from src.input_data import InputParagraph, InputReport
 from spacy.tokens import Doc
 from collections import Counter
-from typing import Any, override
+from typing import Any, Iterator, override
 from sentence_transformers import SentenceTransformer
 
 MODEL_ST: str = "paraphrase-multilingual-MiniLM-L12-v2"
@@ -19,6 +19,7 @@ MIN_MATCHING_WORDS_PER_PARAGRAPH: int = 2
 MIN_MATCHING_PARAGRAPHS: int = 2
 REGEX_BODY_START: re.Pattern = re.compile(r"^\s*(podatki\s*o\s*promet[u]?|(nujn[ae])?\s*prometn[ae]\s*informacij[ae]\s*)[\.:;]*\s*", flags=re.IGNORECASE)
 REGEX_ONLY_CHARS: re.Pattern = re.compile(r"[^a-zčšž]", flags=re.IGNORECASE)
+OUTPUT_PATH: str = "./train.jsonl"
 
 nlp: spacy.language.Language = spacy.load(src.utils.MODEL_SPACY)
 embeddings_model: SentenceTransformer = SentenceTransformer(MODEL_ST)
@@ -35,6 +36,9 @@ class IOParagraph():
     @override
     def __str__(self) -> str:
         return f"IOParagraph(\n\t{self.par_in}\n\t{self.par_out}\n)"
+    def __iter__(self) -> Iterator[tuple[str, str]]:
+        yield "in", self.par_in.raw
+        yield "out", self.par_out.raw
 
 class MatchStats():
     par_in: InputParagraph
@@ -86,7 +90,7 @@ class MatchStats():
             return False
         if abs(self.par_in.get_ne_count() - self.par_out.get_ne_count()) > 2:
             return False
-        if 0.5 < self.similarity_score < 0.7:
+        if 0.6 < self.similarity_score < 0.7:
             print(f"Warning: don't know if this is a match or not\n{self}")
         return (self.similarity_score > 0.70)
     @override
@@ -263,6 +267,8 @@ def main():
         excels: list[InputReport] = list(InputReport(row_excel) for _, row_excel in df_excel_subset.iterrows())
         io_pairs.extend(get_io_pairs(rtf, excels))
         print(f"[{i+1}/{len(df_rtfs)}]")
+    df_out: pd.DataFrame = pd.DataFrame([dict(io_pair) for io_pair in io_pairs])
+    df_out.to_json(OUTPUT_PATH, orient="records", lines=True, force_ascii=False)
 
 if __name__ == "__main__":
     main()
