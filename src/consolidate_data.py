@@ -3,16 +3,17 @@ import spacy
 import datetime
 import pandas as pd
 import Levenshtein
+import threading
 import src.input_data
 import src.output_data
 import src.utils
-import numpy.typing as npt
 from src.output_data import OutputParagraph, OutputReport
 from src.input_data import InputParagraph, InputReport
 from spacy.tokens import Doc
 from collections import Counter
 from typing import Any, Iterator, override
 from sentence_transformers import SentenceTransformer
+from concurrent.futures import ThreadPoolExecutor
 
 MODEL_ST: str = "paraphrase-multilingual-MiniLM-L12-v2"
 MIN_MATCHING_WORDS_PER_PARAGRAPH: int = 2
@@ -20,6 +21,7 @@ MIN_MATCHING_PARAGRAPHS: int = 2
 REGEX_BODY_START: re.Pattern = re.compile(r"^\s*(podatki\s*o\s*promet[u]?|(nujn[ae])?\s*prometn[ae]\s*informacij[ae]\s*)[\.:;]*\s*", flags=re.IGNORECASE)
 REGEX_ONLY_CHARS: re.Pattern = re.compile(r"[^a-zčšž]", flags=re.IGNORECASE)
 OUTPUT_PATH: str = "./train.jsonl"
+MAX_WORKERS: int = 16
 
 nlp: spacy.language.Language = spacy.load(src.utils.MODEL_SPACY)
 embeddings_model: SentenceTransformer = SentenceTransformer(MODEL_ST)
@@ -233,6 +235,13 @@ def get_paragraph_matches_indexes(paragraphs_rtf: list[str], paragraphs_excel: l
             matches_indexes.append(match_indexes)
     return matches_indexes
 
+def ensure_punctuation(s: str) -> str:
+    if not isinstance(s, str) or not s or len(s) < 1:
+        return s
+    if s[-1] not in [".", "!", "?"]:
+        s += "."
+    return s
+
 def remove_duplicates_in_list(lst: list[Any]) -> list[Any]:
     lst_new: list[Any] = []
     for x in lst:
@@ -257,15 +266,29 @@ def main():
     df_rtfs: pd.DataFrame = src.output_data.load_structured()
     df_rtfs["body"] = df_rtfs["body"].apply(strip_body)
     df_excel: pd.DataFrame = src.input_data.load_data()
-    io_pairs: list[IOParagraph] = []
-    for i, row_rtf in df_rtfs.iterrows():
+    io_pairs: list[dict[str, str]] = []
+    df_rtfs = df_rtfs.iloc[:100]
+    counter_lock: threading.Lock = threading.Lock()
+    counter: int = 0
+    total: int = len(df_rtfs)
+    def process_rtf(tup: tuple[int, pd.Series]):
+        _, row_rtf = tup
         rtf: OutputReport = OutputReport(row_rtf)
         timestamp: datetime.datetime = row_rtf.timestamp.to_pydatetime()
         df_excel_subset: pd.DataFrame = src.input_data.get_time_window(df_excel, timestamp, hours_before=4, hours_after=1)
         excels: list[InputReport] = list(InputReport(row_excel) for _, row_excel in df_excel_subset.iterrows())
-        io_pairs.extend(get_io_pairs(rtf, excels))
-        print(f"[{i+1}/{len(df_rtfs)}]")
-    df_out: pd.DataFrame = pd.DataFrame([dict(io_pair) for io_pair in io_pairs])
+        io_pairs_new: list[IOParagraph] = get_io_pairs(rtf, excels)
+        input_joined: str = " ".join(ensure_punctuation(io_pair.par_in.raw) for io_pair in io_pairs_new)
+        output_joined: str = " ".join(ensure_punctuation(io_pair.par_out.raw) for io_pair in io_pairs_new)
+        nonlocal counter
+        with counter_lock:
+            if len(io_pairs_new) > 0:
+                io_pairs.append({"in": input_joined, "out": output_joined})
+            counter += 1
+            print(f"[{counter}/{total}]")
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        executor.map(process_rtf, df_rtfs.iterrows())
+    df_out: pd.DataFrame = pd.DataFrame(io_pairs)
     df_out.to_json(OUTPUT_PATH, orient="records", lines=True, force_ascii=False)
 
 if __name__ == "__main__":
