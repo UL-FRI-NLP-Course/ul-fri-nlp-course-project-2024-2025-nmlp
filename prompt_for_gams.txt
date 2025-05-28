@@ -1,0 +1,14 @@
+
+Iz danih podatkov o prometu ustvarite prometna poročila v slovenščini, v stilu Radia Slovenija.
+
+Uporabite naslednja pravila:
+- Pravilna imena cest in smeri.
+- Formulacija: cesta in smer + razlog + posledica in odsek ALI razlog + cesta in smer + posledica in odsek.
+- Poročajte samo o pomembnih dogodkih (nesreče, zaprte ceste, dela itd.).
+- Vsako poročilo naj bo kratko (2–3 stavki).
+- Jasno ločite več dogodkov.
+
+Podatki:
+
+
+Generiraj poročila:

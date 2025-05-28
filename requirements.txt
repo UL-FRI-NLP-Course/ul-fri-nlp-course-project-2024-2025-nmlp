@@ -10,3 +10,20 @@ transformers
 accelerate
 protobuf
 sentencepiece
+openpyxl # if read_excel doesn't work
+beautifulsoup4==4.12.3
+striprtf==0.0.29
+cdifflib # standrad library
+sentence-transformers==4.1.0 # for sentence similarity
+scikit-learn==1.6.0
+
+# for evaluation
+nltk
+rouge-score
+python-Levenshtein
+scikit-learn
+openai
+
+# fine tunning
+peft
+
