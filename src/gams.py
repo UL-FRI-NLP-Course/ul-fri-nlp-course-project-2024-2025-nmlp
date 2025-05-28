@@ -33,6 +33,7 @@ shot_1: str = """
     Zastoji so na cestah Šmarje-Koper in Lesce-Bled.
     Prav tako so zastoji na zahodni in južni ljubljanski obvoznici od Kosez in Rudnika proti Primorski. Potovalni čas se na obeh odsekih podaljša za približno 15 minut.
     Zaradi del je krajši zastoj na štajerski avtocesti med Blagovico in Trojanami proti Mariboru. Opozarjamo na nevarnost naleta.
+    <EOS>
 """
 
 shot_2: str = """
@@ -62,6 +63,7 @@ shot_2: str = """
     Na primorski avtocesti med Logatcem in Uncem proti Kopru promet poteka samo po prehitevalnem pasu.
     Cesta Koprivna - Črna, pri Pristavi, bo zaprta do 17. ure, prav tako cesta Litija - Zagorje pri Šklendrovcu in cesta Bistrica pri Tržiču - Begunje, v Bistrici, na Begunjski cesti
     V Ljubljani bo do polnoči zaprta Litijska cesta med Pesarsko cesto in Potjo na Breje.
+    <EOS>
 """
 
 shot_3: str = """
@@ -78,6 +80,7 @@ shot_3: str = """
     Proti Ljubljani je na istem odseku zaradi pokvarjenega vozila oviran promet pred predorom Ločica.
     Pokvarjeno vozilo ovira promet tudi na gorenjski avtocesti med predorom Ljubno in priključkom Podtabor proti Ljubljani.
     Od 11-ih do 16-ih bo promet skozi predor Karavanke zaradi del urejen izmenično enosmerno.
+    <EOS>
 """
 
     # "The examples of antonyms are:\nhigh => low\nwide => narrow\nbig =>",
@@ -112,6 +115,7 @@ prompts = [
     - Ne vključuj trivialnih informacij ali običajnih konic, razen če so izredno dolge ali nenavadne.
     - Vsak stavek naj bo jedrnat in razumljiv za branje v etru.
     
+    Poročilo se mora končati z oznako <EOS>
     Spodaj sledijo primeri vhodnih podatkov (iz Excela) in ustrezno oblikovanih izhodnih poročil:
 
     {shot_1}
@@ -135,6 +139,7 @@ prompts = [
     Si profesionalen poročevalec prometnih informacij.
     Dobil boš nekaj podatkov, ki so bili pridobljeni s spletne strani prometnih informacij.
     Tvoja naloga je da ustvariš kratko prometno poročilo (IZHOD) na podlagi teh podatkov (VHOD).
+    Poročilo se mora končati z oznako <EOS>
 
     Nadaljuj zaporedje naslednjih primerov:
 
