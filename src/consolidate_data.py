@@ -49,11 +49,11 @@ class MatchStats():
     def __lt__(self, other):
         if not isinstance(other, MatchStats):
             return False
-        if self.matching_words > other.matching_words:
+        if self.matching_words < other.matching_words:
             return True
-        if self.matching_proper_nouns > other.matching_proper_nouns:
+        if self.matching_proper_nouns < other.matching_proper_nouns:
             return True
-        return (self.similarity_score > other.similarity_score)
+        return (self.similarity_score < other.similarity_score)
     def is_match(self) -> bool:
         # At least this fraction of words from one paragraph must have corresponding word in the other paragraph
         if self.matching_words >= 0.4 * min(self.par_out.get_word_count(), self.par_in.get_word_count()):
