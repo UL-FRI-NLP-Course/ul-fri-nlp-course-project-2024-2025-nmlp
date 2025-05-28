@@ -13,7 +13,7 @@ class Paragraph():
     doc: Doc | None
     normalized: str | None
     def __init__(self, raw: str):
-        self.raw = raw
+        self.raw = raw.strip()
         self.doc = None
         self.normalized = None
         self.normalized_pos = None
@@ -30,6 +30,9 @@ class Paragraph():
     def get_propn_count(self) -> int:
         doc: Doc = self.get_doc()
         return len(list(token for token in doc if token.pos_ == "PROPN"))
+    def get_ne_count(self) -> int:
+        doc: Doc = self.get_doc()
+        return len(doc.ents)
     @override
     def __repr__(self) -> str:
         return self.__str__()
@@ -48,7 +51,7 @@ class Paragraph():
 # Force keep capitalization for proper nouns
 def get_lemma_keep_capitalization(token: Token) -> str:
     if token.lemma_ and len(token.lemma_) > 0 and token.pos_ == "PROPN":
-        return token.lemma_[0].upper() + token.lemma_[1:]
+        return ((token.lemma_[0].upper() if token.text[0].isupper() else token.lemma_[0]) + token.lemma_[1:])
     return token.lemma_
 
 def normalize_str(text: str | Doc) -> str:

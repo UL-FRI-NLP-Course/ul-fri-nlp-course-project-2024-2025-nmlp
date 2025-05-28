@@ -11,7 +11,7 @@ from src.output_data import OutputParagraph, OutputReport
 from src.input_data import InputParagraph, InputReport
 from spacy.tokens import Doc
 from collections import Counter
-from typing import override
+from typing import Any, override
 from sentence_transformers import SentenceTransformer
 
 MODEL_ST: str = "paraphrase-multilingual-MiniLM-L12-v2"
@@ -29,29 +29,42 @@ class IOParagraph():
     def __init__(self, par_in: InputParagraph, par_out: OutputParagraph):
         self.par_in = par_in
         self.par_out = par_out
+    @override
+    def __repr__(self) -> str:
+        return self.__str__()
+    @override
+    def __str__(self) -> str:
+        return f"IOParagraph(\n\t{self.par_in}\n\t{self.par_out}\n)"
 
 class MatchStats():
     par_in: InputParagraph
     par_out: OutputParagraph
     matching_words: int
     matching_proper_nouns: int
+    matching_named_entities: int
     similarity_score: float
-    def __init__(self, par_in: InputParagraph, par_out: OutputParagraph, matching_words: int, matching_proper_nouns: int, similarity_score: float) -> None:
+    def __init__(self, par_in: InputParagraph, par_out: OutputParagraph, matching_words: int, matching_proper_nouns: int, matching_named_entities: int, similarity_score: float) -> None:
         self.par_in = par_in
         self.par_out = par_out
         self.matching_words = matching_words
         self.matching_proper_nouns = matching_proper_nouns
+        self.matching_named_entities = matching_named_entities
         self.similarity_score = similarity_score
     def __eq__(self, other) -> bool:
         if not isinstance(other, MatchStats):
             return False
-        return ((self.matching_words == other.matching_words) and (self.matching_proper_nouns == other.matching_proper_nouns) and (self.similarity_score == other.similarity_score))
+        return ((self.matching_words == other.matching_words) and (self.matching_proper_nouns == other.matching_proper_nouns) and (self.matching_named_entities == other.matching_named_entities) and (self.similarity_score == other.similarity_score))
     def __lt__(self, other):
         if not isinstance(other, MatchStats):
             return False
-        if self.matching_words < other.matching_words:
+        diff_matching_propn: int = abs(self.matching_proper_nouns - other.matching_proper_nouns)
+        diff_matching_ne: int = abs(self.matching_named_entities - other.matching_named_entities)
+        diff_similarity_score: float = abs(self.similarity_score - other.similarity_score)
+        if self.matching_words < other.matching_words and diff_matching_propn < 3 and diff_matching_ne < 3 and diff_similarity_score < 0.3:
             return True
-        if self.matching_proper_nouns < other.matching_proper_nouns:
+        if self.matching_proper_nouns < other.matching_proper_nouns and diff_matching_ne < 3 and diff_similarity_score < 0.3:
+            return True
+        if self.matching_named_entities < other.matching_named_entities and diff_similarity_score < 0.3:
             return True
         return (self.similarity_score < other.similarity_score)
     def is_match(self) -> bool:
@@ -61,12 +74,21 @@ class MatchStats():
         if self.matching_words < 0.15 * min(self.par_out.get_word_count(), self.par_in.get_word_count()):
             return False
         # At least some number of proper nouns must match AND a fraction of both paragraphs' proper nouns as well
-        if self.matching_proper_nouns >= max(3, 0.4 * max(self.par_in.get_propn_count(), self.par_out.get_propn_count())):
+        if self.matching_proper_nouns >= max(2, 0.4 * max(self.par_in.get_propn_count(), self.par_out.get_propn_count())):
             return True
-        if self.matching_proper_nouns < 0.3 * (max(self.par_in.get_propn_count(), self.par_out.get_propn_count()) - 2):
+        if self.matching_proper_nouns < 0.51 * (max(self.par_in.get_propn_count(), self.par_out.get_propn_count()) - 2):
             return False
-        # TODO: add similairty score threshold here
-        return False
+        if abs(self.par_in.get_propn_count() - self.par_out.get_propn_count()) > 2:
+            return False
+        if self.matching_named_entities >= max(2, 0.4 * max(self.par_in.get_ne_count(), self.par_out.get_ne_count())):
+            return True
+        if self.matching_named_entities < 0.51 * (max(self.par_in.get_ne_count(), self.par_out.get_ne_count()) - 2):
+            return False
+        if abs(self.par_in.get_ne_count() - self.par_out.get_ne_count()) > 2:
+            return False
+        if 0.5 < self.similarity_score < 0.7:
+            print(f"Warning: don't know if this is a match or not\n{self}")
+        return (self.similarity_score > 0.70)
     @override
     def __repr__(self) -> str:
         return self.__str__()
@@ -78,6 +100,7 @@ MatchStats(
     par_out: {self.par_out}
     matching_words: {self.matching_words}
     matching_proper_nouns: {self.matching_proper_nouns}
+    matching_named_entities: {self.matching_named_entities}
     similarity_score: {self.similarity_score}
 )
         """.strip()
@@ -97,22 +120,31 @@ def count_matches_levenshtein(str1: str, str2: str, max_distance: int = 1) -> in
                 indexes_used.append(j)
     return matches
 
-def count_matches_propn(str1: str, str2: str) -> int:
-    doc1: Doc = nlp(str1)
-    doc2: Doc = nlp(str2)
-    propn1: list[str] = [token.text for token in doc1 if token.pos_ == "PROPN"]
-    propn2: list[str] = [token.text for token in doc2 if token.pos_ == "PROPN"]
-    c1: Counter = Counter(propn1)
-    c2: Counter = Counter(propn2)
-    return sum(min(c1[k], c2[k]) for k in c1.keys() if k in c2.keys())
+def count_matches_propn(str1: str | Doc, str2: str | Doc) -> int:
+    doc1: Doc = str1 if isinstance(str1, Doc) else nlp(str1)
+    doc2: Doc = str2 if isinstance(str2, Doc) else nlp(str2)
+    propn1: list[str] = [token.lemma_.lower() for token in doc1 if token.pos_ == "PROPN"]
+    propn2: list[str] = [token.lemma_.lower() for token in doc2 if token.pos_ == "PROPN"]
+    # c1: Counter = Counter(propn1)
+    # c2: Counter = Counter(propn2)
+    # return sum(min(c1[k], c2[k]) for k in c1.keys() if k in c2.keys())
+    return count_matches_levenshtein(" ".join(propn1), " ".join(propn2))
+
+def count_matches_ne(str1: str | Doc, str2: str | Doc) -> int:
+    doc1: Doc = str1 if isinstance(str1, Doc) else nlp(str1)
+    doc2: Doc = str2 if isinstance(str2, Doc) else nlp(str2)
+    ne1: list[str] = [token.lemma_.lower() for token in doc1 if token.ent_type_]
+    ne2: list[str] = [token.lemma_.lower() for token in doc2 if token.ent_type_]
+    return count_matches_levenshtein(" ".join(ne1), " ".join(ne2))
 
 def get_match_stats(par_in: InputParagraph, par_out: OutputParagraph) -> MatchStats:
     matching_words: int = count_matches_levenshtein(par_in.get_normalized(), par_out.get_normalized())
-    matching_propn: int = count_matches_propn(par_in.get_normalized(), par_out.get_normalized())
+    matching_propn: int = count_matches_propn(par_in.get_doc(), par_out.get_doc())
+    matching_ne: int = count_matches_ne(par_in.get_doc(), par_out.get_doc())
     emb1: npt.NDArray = embeddings_model.encode(par_in.raw, convert_to_numpy=True)
     emb2: npt.NDArray = embeddings_model.encode(par_out.raw, convert_to_numpy=True)
     similarity_score: float = embeddings_model.similarity(emb1, emb2).item()
-    return MatchStats(par_in, par_out, matching_words, matching_propn, similarity_score)
+    return MatchStats(par_in, par_out, matching_words, matching_propn, matching_ne, similarity_score)
 
 # PROPN – Proper noun: a noun that refers to a specific person, place, or organization, such as “Microsoft” or “John”
 # source: https://www.pythonprog.com/spacy-part-of-speech-tags/
@@ -199,8 +231,15 @@ def get_paragraph_matches_indexes(paragraphs_rtf: list[str], paragraphs_excel: l
             matches_indexes.append(match_indexes)
     return matches_indexes
 
+def remove_duplicates_in_list(lst: list[Any]) -> list[Any]:
+    lst_new: list[Any] = []
+    for x in lst:
+        if x not in lst_new:
+            lst_new.append(x)
+    return lst_new
+
 def get_io_pairs(rtf: OutputReport, excels: list[InputReport]) -> list[IOParagraph]:
-    pars_in: list[InputParagraph] = list(set(par for excel in excels for par in excel.paragraphs))
+    pars_in: list[InputParagraph] = remove_duplicates_in_list([par for excel in excels for par in excel.paragraphs])
     io_pairs: list[IOParagraph] = []
     for par_out in rtf.paragraphs:
         best_match: MatchStats = get_match_stats(pars_in[0], par_out)
@@ -217,12 +256,13 @@ def main():
     df_rtfs["body"] = df_rtfs["body"].apply(strip_body)
     df_excel: pd.DataFrame = src.input_data.load_data()
     io_pairs: list[IOParagraph] = []
-    for _, row_rtf in df_rtfs.iterrows():
+    for i, row_rtf in df_rtfs.iterrows():
         rtf: OutputReport = OutputReport(row_rtf)
         timestamp: datetime.datetime = row_rtf.timestamp.to_pydatetime()
         df_excel_subset: pd.DataFrame = src.input_data.get_time_window(df_excel, timestamp, hours_before=4, hours_after=1)
         excels: list[InputReport] = list(InputReport(row_excel) for _, row_excel in df_excel_subset.iterrows())
         io_pairs.extend(get_io_pairs(rtf, excels))
+        print(f"[{i+1}/{len(df_rtfs)}]")
 
 if __name__ == "__main__":
     main()
