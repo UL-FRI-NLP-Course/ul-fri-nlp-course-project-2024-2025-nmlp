@@ -5,12 +5,18 @@ import torch
 # model_id = "cjvt/GaMS-9B-Instruct"
 model_id = "cjvt/GaMS-27B-Instruct"
 
+model_to_dtype: dict[str, torch.dtype] = {
+    "cjvt/GaMS-2B": torch.float32,
+    "cjvt/GaMS-9B-Instruct": torch.bfloat16,
+    "cjvt/GaMS-27B-Instruct": torch.bfloat16,
+} 
+
 pline = pipeline(
     "text-generation",
     model=model_id,
     # device_map="cuda",
     device_map="auto", # Multi-GPU
-    model_kwargs={"torch_dtype": torch.bfloat16},
+    torch_dtype=model_to_dtype[model_id],
 )
 
 shot_1: str = """
