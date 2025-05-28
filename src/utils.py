@@ -1,5 +1,7 @@
 import re
 import spacy
+import numpy.typing as npt
+from sentence_transformers import SentenceTransformer
 from spacy.tokens import Doc, Token
 from typing import override
 
@@ -12,17 +14,21 @@ class Paragraph():
     raw: str
     doc: Doc | None
     normalized: str | None
+    embedding: npt.NDArray | None = None
     def __init__(self, raw: str):
         self.raw = raw.strip()
         self.doc = None
         self.normalized = None
-        self.normalized_pos = None
+        self.embedding = None
     def get_doc(self) -> Doc:
         self.doc = self.doc if self.doc is not None else nlp(self.raw)
         return self.doc
     def get_normalized(self) -> str:
         self.normalized = self.normalized if self.normalized is not None else normalize_str(self.get_doc())
         return self.normalized
+    def get_embedding(self, embeddings_model: SentenceTransformer) -> npt.NDArray:
+        self.embedding = self.embedding if self.embedding is not None else embeddings_model.encode(self.raw, convert_to_numpy=True)
+        return self.embedding
     def get_word_count(self) -> int:
         if not self.get_normalized():
             return 0

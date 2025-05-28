@@ -145,9 +145,7 @@ def get_match_stats(par_in: InputParagraph, par_out: OutputParagraph) -> MatchSt
     matching_words: int = count_matches_levenshtein(par_in.get_normalized(), par_out.get_normalized())
     matching_propn: int = count_matches_propn(par_in.get_doc(), par_out.get_doc())
     matching_ne: int = count_matches_ne(par_in.get_doc(), par_out.get_doc())
-    emb1: npt.NDArray = embeddings_model.encode(par_in.raw, convert_to_numpy=True)
-    emb2: npt.NDArray = embeddings_model.encode(par_out.raw, convert_to_numpy=True)
-    similarity_score: float = embeddings_model.similarity(emb1, emb2).item()
+    similarity_score: float = embeddings_model.similarity(par_in.get_embedding(embeddings_model), par_out.get_embedding(embeddings_model)).item()
     return MatchStats(par_in, par_out, matching_words, matching_propn, matching_ne, similarity_score)
 
 # PROPN – Proper noun: a noun that refers to a specific person, place, or organization, such as “Microsoft” or “John”
