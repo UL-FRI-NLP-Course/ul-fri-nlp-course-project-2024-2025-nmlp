@@ -192,7 +192,13 @@ sequences = pline(
 )
 
 for seq in sequences:
+    result: str = seq[0]["generated_text"]
+    try:
+        result = result[:result.index("<EOS>")]
+    except:
+        print("Error while trying to cut generated output")
+
     print("--------------------------")
-    print(f"Result: {seq[0]['generated_text']}")
+    print(f"Result: {result}")
     print("--------------------------\n")
 
