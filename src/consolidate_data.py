@@ -267,7 +267,6 @@ def main():
     df_rtfs: pd.DataFrame = src.output_data.load_structured()
     df_rtfs["body"] = df_rtfs["body"].apply(strip_body)
     df_excel: pd.DataFrame = src.input_data.load_data()
-    df_rtfs = df_rtfs.iloc[:100]
     lock: threading.Lock = threading.Lock()
     counter: int = 0
     total: int = len(df_rtfs)
