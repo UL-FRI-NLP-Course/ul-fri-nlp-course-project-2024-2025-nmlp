@@ -4,6 +4,7 @@ openpyxl
 striprtf
 python-Levenshtein
 spacy
+datasets
 
 # Tools specifically for running LLMs
 transformers
