@@ -27,7 +27,7 @@ from nemo.collections.llm.recipes.log.default import default_log, default_resume
 from nemo.collections.llm.recipes.optim.adam import distributed_fused_adam_with_cosine_annealing
 from nemo.utils.exp_manager import TimingCallback
 
-NAME = "gemma2_27b"
+NAME = "gams_27b_instruct"
 
 
 @run.cli.factory(name=NAME)
@@ -62,7 +62,7 @@ def pretrain_recipe(
     virtual_pipeline_parallelism: Optional[int] = None,
     context_parallelism: int = 1,
     sequence_parallelism: bool = False,
-    num_nodes: int = 2,
+    num_nodes: int = 1,
     num_gpus_per_node: int = 8,
     max_steps: int = 1168251,
     precision: str = "bf16-mixed",
@@ -211,7 +211,7 @@ def finetune_recipe(
         This recipe uses the SQuAD dataset for fine-tuning.
     """
     recipe = default_finetune_recipe(
-        model(), "google/gemma-2-27b", dir, name, num_nodes, num_gpus_per_node, packed_sequence
+        model(), "cjvt/gams-27b-instruct", dir, name, num_nodes, num_gpus_per_node, packed_sequence
     )
     # Gemma requires BOS
     recipe.data.dataset_kwargs = {'add_bos': True}
