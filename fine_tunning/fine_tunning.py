@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM, Trainer, TrainingArguments, DataCollatorWithPadding
+from transformers import AutoTokenizer, AutoModelForCausalLM, Trainer, TrainingArguments, DataCollatorWithPadding, DataCollatorForSeq2Seq
 from peft import get_peft_model, LoraConfig, TaskType, PeftModel, PeftConfig
 from datasets import Dataset
 import torch
@@ -103,14 +103,42 @@ def main():
         tokenized = tokenizer(full_input, truncation=True, padding="max_length", max_length=256)
         tokenized["labels"] = tokenized["input_ids"].copy()
         return tokenized
+
+    def tokenize_function(example):
+    
+        # Step 1: Define the prompt template
+        prompt = f"VHOD:\n{example['input']}\n\nIZHOD:\n"
+        answer = f"{example["output"]}<EOS>"
+    
+        # Step 2: Tokenize prompt and answer SEPARATELY
+        tokenized_prompt = tokenizer(prompt, truncation=True, add_special_tokens=False)
+        tokenized_answer = tokenizer(answer, truncation=True, add_special_tokens=False)
+    
+        # Step 3: Combine and create labels
+        input_ids = tokenized_prompt["input_ids"] + tokenized_answer["input_ids"]
+        attention_mask = [1] * len(input_ids)  # All tokens are active
+        labels = [-100] * len(tokenized_prompt["input_ids"]) + tokenized_answer["input_ids"]
+    
+        # Step 4: Truncate if exceeds max_length
+        max_length = 512
+        if len(input_ids) > max_length:
+            input_ids = input_ids[:max_length]
+            attention_mask = attention_mask[:max_length]
+            labels = labels[:max_length]
+    
+        return {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+            "labels": labels
+        }
     
     print("Preprocessing dataset...")
-    dataset = dataset.map(preprocess)
+    dataset = dataset.map(tokenize_function)
     
     # ---------- Training Args ----------
     training_args = TrainingArguments(
         output_dir=f"{PEFT_DIR}/outputs",
-        per_device_train_batch_size=4,
+        per_device_train_batch_size=2,
         num_train_epochs=3,
         logging_dir="./logs",
         logging_steps=50,
@@ -119,9 +147,16 @@ def main():
         learning_rate=1e-4,
         report_to="none",
         bf16=(model_to_dtype[MODEL_NAME] == torch.bfloat16),
+        label_names=["labels"],
     )
     
-    data_collator = DataCollatorWithPadding(tokenizer)
+    # data_collator = DataCollatorWithPadding(tokenizer)
+    data_collator = DataCollatorForSeq2Seq(
+        tokenizer,
+        padding=True,
+        pad_to_multiple_of=8,
+        label_pad_token_id=-100  # Ignore padding in loss
+    )
     
     trainer = Trainer(
         model=model,
