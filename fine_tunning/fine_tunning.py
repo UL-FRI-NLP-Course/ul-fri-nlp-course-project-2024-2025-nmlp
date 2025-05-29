@@ -110,11 +110,11 @@ def main():
     # ---------- Training Args ----------
     training_args = TrainingArguments(
         output_dir=f"{PEFT_DIR}/outputs",
-        per_device_train_batch_size=1,
+        per_device_train_batch_size=4,
         num_train_epochs=3,
         logging_dir="./logs",
-        logging_steps=5,
-        save_steps=20,
+        logging_steps=50,
+        save_steps=50,
         save_total_limit=2,
         learning_rate=1e-4,
         report_to="none",
