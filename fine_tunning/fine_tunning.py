@@ -6,11 +6,19 @@ import json
 import os
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "auto" if torch.cuda.device_count() > 1 else device
 print(f"Running on: {device}", flush=True)
 
 # ---------- CONFIGURATION ----------
 # MODEL_NAME = "cjvt/GaMS-2B"
+# MODEL_NAME = "cjvt/GaMS-9B-Instruct"
 MODEL_NAME = "cjvt/GaMS-27B-Instruct"
+
+model_to_dtype: dict[str, torch.dtype] = {
+    "cjvt/GaMS-2B": torch.float32,
+    "cjvt/GaMS-9B-Instruct": torch.bfloat16,
+    "cjvt/GaMS-27B-Instruct": torch.bfloat16,
+} 
 PEFT_DIR = "/d/hpc/projects/onj_fri/nmlp/PEFT/"
 IO_PAIRS_PATH = "/d/hpc/projects/onj_fri/nmlp/dp2.jsonl"
 
@@ -35,13 +43,23 @@ def main():
     # ---------- Load Model ----------
     if RESUME_FROM:
         print("Resuming from PEFT checkpoint...")
-        base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map=device)
+        base_model = AutoModelForCausalLM.from_pretrained(
+            MODEL_NAME,
+            device_map=device,
+            torch_dtype=model_to_dtype[MODEL_NAME],
+        )
         model = PeftModel.from_pretrained(base_model, PEFT_DIR)
     else:
         print("Loading base model and applying LoRA...")
-        base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map=device)
+        base_model = AutoModelForCausalLM.from_pretrained(
+            MODEL_NAME,
+            device_map=device,
+            torch_dtype=model_to_dtype[MODEL_NAME],
+        )
         model = get_peft_model(base_model, lora_config)
         model.print_trainable_parameters()
+    # Make sure the model is on device
+    model.to(device)
     
     # ---------- Actual Dataset ----------
     def get_dataset():
