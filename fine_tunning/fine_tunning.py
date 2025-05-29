@@ -9,10 +9,13 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 device = "auto" if torch.cuda.device_count() > 1 else device
 print(f"Running on: {device}", flush=True)
 
+# avoid duplication
+Trainer._setup_devices = lambda self: None
+
 # ---------- CONFIGURATION ----------
-# MODEL_NAME = "cjvt/GaMS-2B"
+MODEL_NAME = "cjvt/GaMS-2B"
 # MODEL_NAME = "cjvt/GaMS-9B-Instruct"
-MODEL_NAME = "cjvt/GaMS-27B-Instruct"
+# MODEL_NAME = "cjvt/GaMS-27B-Instruct"
 
 model_to_dtype: dict[str, torch.dtype] = {
     "cjvt/GaMS-2B": torch.float32,
@@ -60,6 +63,7 @@ def main():
         model.print_trainable_parameters()
     # Make sure the model is on device
     model.to(device)
+    model.gradient_checkpointing_enable()
     
     # ---------- Actual Dataset ----------
     def get_dataset():
