@@ -118,7 +118,7 @@ def main():
         save_total_limit=2,
         learning_rate=1e-4,
         report_to="none",
-        fp16=USE_CUDA,
+        bf16=(model_to_dtype[MODEL_NAME] == torch.bfloat16),
     )
     
     data_collator = DataCollatorWithPadding(tokenizer)
