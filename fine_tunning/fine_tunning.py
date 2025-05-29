@@ -34,11 +34,11 @@ lora_config = LoraConfig(
 # ---------- Load Model ----------
 if RESUME_FROM:
     print("Resuming from PEFT checkpoint...")
-    base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+    base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map=device)
     model = PeftModel.from_pretrained(base_model, PEFT_DIR)
 else:
     print("Loading base model and applying LoRA...")
-    base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+    base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map=device)
     model = get_peft_model(base_model, lora_config)
     model.print_trainable_parameters()
 
