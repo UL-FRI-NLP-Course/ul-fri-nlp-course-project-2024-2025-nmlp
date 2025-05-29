@@ -3,6 +3,9 @@ from peft import get_peft_model, LoraConfig, TaskType, PeftModel, PeftConfig
 from datasets import Dataset
 import torch
 import os
+from transformers import BitsAndBytesConfig
+from transformers import DataCollatorForLanguageModeling
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Running on: {device}", flush=True)
@@ -17,6 +20,7 @@ if not os.path.exists(PEFT_DIR):
 RESUME_FROM = os.path.exists(os.path.join(PEFT_DIR, "adapter_model.bin"))
 USE_CUDA = torch.cuda.is_available()
 
+bnb_config = BitsAndBytesConfig(load_in_8bit=True)
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 # ---------- LoRA Configuration ----------
@@ -28,14 +32,15 @@ lora_config = LoraConfig(
     bias="none"
 )
 
+
 # ---------- Load Model ----------
 if RESUME_FROM:
     print("Resuming from PEFT checkpoint...")
-    base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+    base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map=device, quantization_config=bnb_config)
     model = PeftModel.from_pretrained(base_model, PEFT_DIR)
 else:
     print("Loading base model and applying LoRA...")
-    base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+    base_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, device_map=device, quantization_config=bnb_config)
     model = get_peft_model(base_model, lora_config)
     model.print_trainable_parameters()
 
@@ -67,7 +72,7 @@ dataset = dataset.map(preprocess)
 # ---------- Training Args ----------
 training_args = TrainingArguments(
     output_dir="./outputs",
-    per_device_train_batch_size=1,
+    per_device_train_batch_size=4,
     num_train_epochs=3,
     logging_dir="./logs",
     logging_steps=5,
@@ -78,7 +83,8 @@ training_args = TrainingArguments(
     fp16=USE_CUDA,
 )
 
-data_collator = DataCollatorWithPadding(tokenizer)
+# data_collator = DataCollatorWithPadding(tokenizer)
+data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
 trainer = Trainer(
     model=model,
