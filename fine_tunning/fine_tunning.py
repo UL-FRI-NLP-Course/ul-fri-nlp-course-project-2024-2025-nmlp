@@ -99,7 +99,7 @@ def main():
     def preprocess(example):
         prompt = example["input"]
         output = example["output"]
-        full_input = f"{prompt}\n###\n{output}"  # join prompt/output for causal LM
+        full_input = f"VHOD:\n{prompt}\n\nIZHOD:\n{output}\n<EOS>"
         tokenized = tokenizer(full_input, truncation=True, padding="max_length", max_length=256)
         tokenized["labels"] = tokenized["input_ids"].copy()
         return tokenized
