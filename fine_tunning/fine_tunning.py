@@ -37,8 +37,8 @@ def main():
     # ---------- LoRA Configuration ----------
     lora_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
-        r=8,
-        lora_alpha=32,
+        r=64,
+        lora_alpha=64,
         lora_dropout=0.1,
         bias="none"
     )
