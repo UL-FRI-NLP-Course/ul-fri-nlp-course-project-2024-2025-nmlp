@@ -201,7 +201,7 @@ def main():
             nonlocal counter
             with lock:
                 if len(io_pairs_new) > 0:
-                    file.write(json.dumps({"vhod": input_joined, "izhod": output_joined}, ensure_ascii=False) + "\n")
+                    file.write(json.dumps({"input": input_joined, "output": output_joined}, ensure_ascii=False) + "\n")
                     file.flush()
                 counter += 1
                 print(f"[{counter}/{total}]")
