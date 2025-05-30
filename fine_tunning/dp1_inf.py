@@ -183,18 +183,12 @@ prompts = [
 ]
 
 input: str = """
-    Na štajerski avtocesti je zaradi okvare vozila oviran promet na zaviralnem pasu pred izvozom Blagovica iz smeri Ljubljane.
-    Na primorski avtocesti je zaradi okvare vozila oviran promet med razcepom Nanos in priključkom Senožeče proti Kopru.
-    Na gorenjski avtocesti je zaradi okvare vozila oviran promet med priključkom Lesce in galerijo Moste proti Karavankam.
-    Omejitev prometa tovornih vozil, katerih največja dovoljena masa presega 7,5 t:
-        danes, 31. 3., do 22. ure;
-        v ponedeljek, 1. 4., med 8. in 22. uro.
-    V ponedeljek, 1. 4., in torek, 2. 4., je pričakovati povečan promet iz smeri Hrvaške proti notranjosti Slovenije ter naprej proti Avstriji in Italiji.
-    Delo na cesti
-    Popolne zapore na priključkih:
-        na ljubljanski severni obvoznici izvoz Podutik iz smeri Kosez;
-        na gorenjski avtocesti, uvoz Šentvid s Celovške ceste proti Kosezam in uvoz Podutik proti Karavankam.
-    V Domžalah je zaprta Virska cesta, med Ljubljansko cesto in Podrečjem. Do 10. aprila bo promet preko priključka Domžale proti Kamniku preusmerjen na lokalne ceste.
+Prometne informacije       09. 09. 2024      19.30           2. program
+
+Podatki o prometu.
+
+Nesreče Na podravski avtocesti je na razcepu Draženci iz smeri Ptuja proti Hrvaški oviran promet, na tem odseku je še spolzko vozišče. Previdno! Zastoji Na gorenjski avtocesti je zastoj tovornih vozil pred predorom Karavanke proti Avstriji, približno 3 kilometre. Proti Kranjski Gori je možen izvoz Jesenice vzhod/Lipce. Nesreče Na primorski avtocesti je pred Brezovico proti Kopru zaprt skrajno desni vozni pas. Na štajerski avtocesti med Framom in Polskavo v obe smeri, občasno, delovna zapora. Na cestah Lesce - Bled, Dobrova - Brezovica in Ljubljana - Brezovica. Zaradi popoldanske prometne konice je promet povečan na cestah iz mestnih središč in na mestnih obvoznicah. Delo na cesti Na gorenjski avtocesti v predoru Karavanke bo promet potekal izmenično enosmerno s čakalno dobo pred predorom: - danes med 14.30 in 20.30; - 10. in 11. september med 8. in 20.30 . Zastoj je tudi proti Sloveniji. Popolne zapore: - V noči s torka na sredo bo med 20. in 5. uro, na gorenjski avtocesti zaprt predor Šentvid proti Ljubljani. - V Zgornji Sorici od 10. septembra do 17. ure do 13. ure. Obvoz bo preko Petrovega Brda. Več o delovnih zaporah v prometni napovedi . Buy vignette for Slovenia online Thererore long queues are expected in entering points from Austria to Slovenia, i.e. Karavanke tunnel (A2) and Sentilj/Spielfeld crossing (A1). Important reason for these queues is that drivers don't have vignette for Slovenian roads and have to buy them at the border. To reduce or even avoid long waiting periods drivers are strongly recommended to buy vignette for Slovenian motorways online. They can do it here . DARS Nina Mesarič, PIC      Tovorna vozila Delo na cesti Na gorenjski avtocesti v predoru Karavanke bo promet potekal izmenično enosmerno s čakalno dobo pred predorom 10. DARS Barbara Janežič, PIC      Tovorna vozila
+
 """
 
 prompts = [prompt.format(input=input) for prompt in prompts]
