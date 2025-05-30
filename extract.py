@@ -7,11 +7,18 @@ import re
 from sentenceMatching import *
 import glob
 from datetime import timedelta
+import time
+import json
+from multiprocessing import Pool, cpu_count
+from datetime import datetime
+import random
 
+# Filter Excel by datetime range
 def extract_excel_by_date(path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx", destination="filtered_traffic_2022_01_30.xlsx", 
                         from_date="2022-01-30 00:00:00", to_date="2022-01-30 23:59:59"):
     # 1. Load the Excel file
-    df = pd.read_excel(path)
+    all_sheets = pd.read_excel(path, sheet_name=None)
+    df = pd.concat(all_sheets.values(), ignore_index=True)
 
     # 2. Convert 'Datum' to datetime (accounting for double space)
     df['Datum'] = pd.to_datetime(df['Datum'], format='%d/%m/%Y  %H:%M:%S', errors='coerce')
@@ -30,9 +37,9 @@ def extract_excel_by_date(path="data/Podatki - PrometnoPorocilo_2022_2023_2024.x
     filtered_df.to_excel(destination, index=False)
 
     # 6. Confirm
-    print(f"Saved {len(filtered_df)} rows to 'filtered_traffic_2022_01_30.csv'")
+    print(f"Saved {len(filtered_df)} rows to {path}")
 
-
+# Clean and strip HTML from Excel content
 def clean_excel(input='filtered_traffic_2022_01_30.xlsx', output="filtered_traffic_2022_01_30_cleaned.xlsx"):
     # Load Excel
     df = pd.read_excel(input)
@@ -63,6 +70,7 @@ def clean_excel(input='filtered_traffic_2022_01_30.xlsx', output="filtered_traff
     df.to_excel(output_path, index=False)
     print(f"Cleaned and saved to {output_path}")
 
+# Parse .rtf files from RTVSlo reports
 def extract_rtf():
     # Define path to RTF folder
     base_path = r"C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si/Promet 2022/Januar 2022"
@@ -119,6 +127,7 @@ def group_unique_sentences(series):
     unique = list(dict.fromkeys([s.strip() for s in all_sentences if s.strip()]))
     return " ".join(unique)
 
+# Group and clean Excel data for prompt generation
 def create_prompt_input(input='filtered_traffic_2022_01_30_cleaned.xlsx', output='prompt_input_traffic_2022_01_30.xlsx', function=group_unique_sentences):
     # Reload the cleaned Excel file
     df = pd.read_excel(input)
@@ -172,6 +181,7 @@ def parse_rtf_datetime(text):
         except:
             return None
     return None
+
 
 def find_closest_rtf_and_extract(base_dir, target_datetime):
     month_translation = {
@@ -241,6 +251,7 @@ def prepare_prompt_from_datetime(
     temp_excel="filtered_traffic.xlsx",
     temp_cleaned="filtered_traffic_cleaned.xlsx",
     prompt_output="prompt_input.xlsx",
+    flat_output="flat_prompt_input.txt",
     grouping_fn=group_unique_semantic_informative
 ):
     # Step 1: Parse target datetime
@@ -263,16 +274,139 @@ def prepare_prompt_from_datetime(
     # Step 4: Clean and group the Excel
     clean_excel(input=temp_excel, output=temp_cleaned)
     # create_prompt_input(input=temp_cleaned, output=prompt_output, function=grouping_fn)
-    flat_input = create_flat_input(input=temp_cleaned, output="flat_prompt_input.txt", function=grouping_fn, from_time=target_time)
-
+    flat_input = create_flat_input(input=temp_cleaned, output=flat_output, function=grouping_fn, from_time=target_time)
 
     print(f"\nFinal prompt-input saved to {prompt_output}")
     print(f"RTF output (should match that time):\n\n---\n{rtf_text}\n---\n")
     return flat_input, rtf_text
 
 
+def get_prompt_and_output(timestamp_str, hours_back, rtf_base, grouping_fn=group_unique_semantic_informative):
+    prompt_input, rtf_output = prepare_prompt_from_datetime(
+        timestamp_str=timestamp_str,
+        hours_back=hours_back,
+        rtf_base=rtf_base,
+        grouping_fn=grouping_fn
+    )
+    return prompt_input, rtf_output
+
+def prepare_input_output_pairs(start_date="2022-01-2 12:30:00", end_date="2024-12-2 23:30:00", hours_back=24, rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si", json_path="input_output_pairs.json"):
+    current_date = pd.to_datetime(start_date)
+    end_date_dt = pd.to_datetime(end_date)
+    pairs = []
+
+    # Make sure hours_back is iterable
+    hours_back_iter = [hours_back] if isinstance(hours_back, int) else hours_back
+
+    while current_date <= end_date_dt:
+        print(f"Processing date: {current_date.strftime('%Y-%m-%d %H:%M:%S')}")
+        for hours in hours_back_iter:
+            prompt_input, rtf_output = get_prompt_and_output(
+                timestamp_str=current_date.strftime('%Y-%m-%d %H:%M:%S'),
+                hours_back=hours,
+                rtf_base=rtf_base
+            )
+            if prompt_input and rtf_output:
+                pairs.append({
+                    "input": prompt_input,
+                    "output": rtf_output
+                })
+        current_date += timedelta(hours=1)
+
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(pairs, f, ensure_ascii=False, indent=2)
+
+    print(f"\nSaved {len(pairs)} input-output pairs to '{json_path}'")
+    return pairs
 
 
+def process_rtf_file(args):
+    rtf_path, start_dt, end_dt, df, hours_back = args
+    try:
+        with open(rtf_path, 'r', encoding='utf-8') as f:
+            rtf_text = rtf_to_text(f.read())
+            rtf_time = parse_rtf_datetime(rtf_text)
+            if rtf_time and (start_dt <= rtf_time <= end_dt):
+                from_time = rtf_time - timedelta(hours=hours_back)
+                to_time = rtf_time
+                subset = df[(df['Datum'] >= from_time) & (df['Datum'] <= to_time)]
+                if subset.empty:
+                    return None
+                flat_input = group_unique_semantic_informative(subset['combined'])
+                if not flat_input.strip():
+                    return None
+                prompt = f"Prometne informacije {to_time.strftime('%d. %m. %Y')} {to_time.strftime('%H.%M')}\n\n{flat_input}"
+                return {"input": prompt, "output": rtf_text}
+    except Exception as e:
+        print(f"Failed to parse {rtf_path}: {e}")
+    return None
+
+def generate_input_output_pairs_fast(
+    excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
+    rtf_base="C:/.../RTVSlo/Podatki - rtvslo.si",
+    start_date="2022-01-30 00:00:00",
+    end_date="2022-01-30 23:59:59",
+    hours_back=3,
+    json_path="input_output_pairs.json",
+    grouping_fn=group_unique_semantic_informative
+):
+    start_dt = pd.to_datetime(start_date)
+    end_dt = pd.to_datetime(end_date)
+
+    # Load Excel and preprocess
+    df = pd.read_excel(excel_path)
+    df['Datum'] = pd.to_datetime(df['Datum'], format='%d/%m/%Y  %H:%M:%S', errors='coerce')
+    df = df.drop(columns=["TitleDeloNaCestiSLO", "LegacyId", "Operater"], errors='ignore')
+
+    text_columns = df.columns.difference(['Datum'])
+    for col in text_columns:
+        df[col] = df[col].apply(clean_text)
+    df['combined'] = df[text_columns].apply(extract_unique_sentences, axis=1)
+
+    # Parse RTFs within date range
+    rtf_files = glob.glob(os.path.join(rtf_base, "**", "TMP*.rtf"), recursive=True)
+    parsed_rtf = []
+    for rtf_path in sorted(rtf_files, key=rtf_datetime_sort_key):
+        try:
+            with open(rtf_path, 'r', encoding='utf-8') as f:
+                rtf_text = rtf_to_text(f.read())
+                rtf_time = parse_rtf_datetime(rtf_text)
+                if rtf_time and (start_dt <= rtf_time <= end_dt):
+                    parsed_rtf.append((rtf_time, rtf_text.strip()))
+        except Exception as e:
+            print(f"Failed to parse {rtf_path}: {e}")
+
+    # Create input-output pairs
+    all_pairs = []
+    for rtf_time, rtf_text in parsed_rtf:
+        from_time = rtf_time - timedelta(hours=hours_back)
+        to_time = rtf_time
+
+        # Sliding window
+        subset = df[(df['Datum'] >= from_time) & (df['Datum'] <= to_time)]
+        if subset.empty:
+            continue
+
+        flat_input = grouping_fn(subset['combined'])
+        if not flat_input.strip():
+            continue
+
+        prompt = f"Prometne informacije {to_time.strftime('%d. %m. %Y')} {to_time.strftime('%H.%M')}\n\n{flat_input}"
+        all_pairs.append({
+            "input": prompt,
+            "output": rtf_text
+        })
+
+    # Save to JSON
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(all_pairs, f, ensure_ascii=False, indent=2)
+
+    print(f"Saved {len(all_pairs)} pairs to '{json_path}'")
+    print(all_pairs)
+    return all_pairs
+
+
+# Test preprocessing strategies to see which has best similarity with RTF outputs
 def test_preprocessing_strategies():
     strategies = [
         group_unique_sentences,
@@ -291,24 +425,166 @@ def test_preprocessing_strategies():
             score = compute_similarity_score(prompt_input, rtf_output)
             print(f"{fn.__name__} @ {hours}h => Similarity: {score:.4f}\n")
 
-# test_preprocessing_strategies()
 
-# Example usage:
-# extract_excel_by_date()
-# extract_rtf()
-# clean_excel()
-# create_prompt_input(output='group_semantic.xlsx', function=group_unique_semantic)
-# create_prompt_input(output='group_informative.xlsx', function=group_unique_semantic_informative)
-# prepare_prompt_from_datetime(
-#     timestamp_str="2022-01-30 15:30:00",
-#     hours_back=8
-# )
-
-prompt_input, rtf_output = prepare_prompt_from_datetime(
-    timestamp_str="2022-01-30 15:30:00",
-    hours_back=24,
+def main_random_pairs(
+    n_times=50,
+    start_str="2023-01-01 00:00:00",
+    end_str="2024-12-31 23:59:59",
+    hours_back=4,
+    rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
+    excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
+    jsonl_path="data2.jsonl",
     grouping_fn=group_unique_semantic_informative
-)
+):
+    """
+    Generate `n_times` random timestamps between `start_str` and `end_str`,
+    create input-output pairs via `prepare_prompt_from_datetime`, and
+    write them as JSON lines to `jsonl_path`.
+    """
+    # Parse range
+    start_dt = datetime.fromisoformat(start_str)
+    end_dt = datetime.fromisoformat(end_str)
+    delta = end_dt - start_dt
 
-score = compute_similarity_score(prompt_input, rtf_output)
-print(f"Similarity: {score:.4f}\n")
+    pairs = []
+    for i in range(n_times):
+        # Generate random datetime in range
+        rand_sec = random.random() * delta.total_seconds()
+        ts = start_dt + timedelta(seconds=rand_sec)
+        timetime = ts.strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{i+1}/{n_times}] Processing timestamp: {timetime}")
+
+        # Prepare prompt and output
+        flat_input, rtf_output = prepare_prompt_from_datetime(
+            timestamp_str=timetime,
+            hours_back=hours_back,
+            rtf_base=rtf_base,
+            excel_path=excel_path,
+            grouping_fn=grouping_fn,
+            temp_excel=f"temp_{i}.xlsx",
+            temp_cleaned=f"temp_cleaned_{i}.xlsx",
+            prompt_output=f"prompt_{i}.xlsx",
+            flat_output=f"flat_prompt_{i}.txt",
+        )
+        if flat_input and rtf_output:
+            pairs.append({"input": flat_input, "output": rtf_output})
+        else:
+            print(f"    Skipped timestamp {timetime}: no data generated.")
+
+    # Write JSONL
+    with open(jsonl_path, 'w', encoding='utf-8') as f:
+        for pair in pairs:
+            f.write(json.dumps(pair, ensure_ascii=False) + "\n")
+
+    print(f"Saved {len(pairs)} pairs to {jsonl_path}")
+    return pairs
+
+if __name__ == "__main__":
+    start_time = time.time()
+    # Generate random pairs used for inference and evaluation
+    main_random_pairs()
+    elapsed = time.time() - start_time
+    print(f"Total time: {timedelta(seconds=elapsed)}")
+
+    # Example usages:
+
+    # extract_excel_by_date:
+    # Filters Excel rows by a datetime window and saves to a new file.
+    # extract_excel_by_date(
+    #     path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
+    #     destination="filtered_jan30.xlsx",
+    #     from_date="2022-01-30 00:00:00",
+    #     to_date="2022-01-30 23:59:59"
+    # )
+
+    # clean_excel:
+    # Strips HTML and normalizes whitespace in text columns.
+    # clean_excel(
+    #     input="filtered_jan30.xlsx",
+    #     output="filtered_jan30_cleaned.xlsx"
+    # )
+
+    # extract_rtf:
+    # Reads and extracts plain text from multiple RTF files.
+    # extract_rtf()
+
+    # create_prompt_input:
+    # Groups and cleans text from Excel into 30-minute time blocks.
+    # create_prompt_input(
+    #     input="filtered_jan30_cleaned.xlsx",
+    #     output="prompt_grouped.xlsx",
+    #     function=group_unique_sentences
+    # )
+
+    # find_closest_rtf_and_extract:
+    # Finds the RTF file closest to a given datetime.
+    # find_closest_rtf_and_extract(
+    #     base_dir="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
+    #     target_datetime=pd.Timestamp("2022-01-30 15:30:00")
+    # )
+
+    # create_flat_input:
+    # Generates a flat prompt string from cleaned Excel data.
+    # create_flat_input(
+    #     input="filtered_jan30_cleaned.xlsx",
+    #     output="flat_prompt.txt",
+    #     function=group_unique_semantic_informative,
+    #     from_time=pd.Timestamp("2022-01-30 15:30:00")
+    # )
+
+    # prepare_prompt_from_datetime:
+    # Full pipeline: aligns RTF with Excel and generates prompt-output pair.
+    # prepare_prompt_from_datetime(
+    #     timestamp_str="2022-01-30 15:30:00",
+    #     hours_back=4,
+    #     rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
+    #     excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx"
+    # )
+
+    # get_prompt_and_output:
+    # Wrapper to just get strings (prompt + RTF) for a given time.
+    # get_prompt_and_output(
+    #     timestamp_str="2022-01-30 15:30:00",
+    #     hours_back=4,
+    #     rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si"
+    # )
+
+    # prepare_input_output_pairs:
+    # Loops through time window and saves prompt-output pairs to JSON.
+    # prepare_input_output_pairs(
+    #     start_date="2022-01-30 00:00:00",
+    #     end_date="2022-01-30 23:59:59",
+    #     hours_back=4,
+    #     rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
+    #     json_path="pairs.json"
+    # )
+
+    # generate_input_output_pairs_fast:
+    # Faster batch method for creating all pairs between Excel and RTFs.
+    # generate_input_output_pairs_fast(
+    #     excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
+    #     rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
+    #     start_date="2022-01-30 00:00:00",
+    #     end_date="2022-01-30 23:59:59",
+    #     hours_back=4,
+    #     json_path="fast_pairs.json"
+    # )
+
+    # test_preprocessing_strategies:
+    # Evaluates different grouping strategies on similarity to RTF.
+    # test_preprocessing_strategies()
+
+    # main_random_pairs:
+    # Randomly samples N timestamps and creates JSONL of prompt-output pairs.
+    # main_random_pairs(
+    #     n_times=10,
+    #     start_str="2023-01-01 00:00:00",
+    #     end_str="2024-12-31 23:59:59",
+    #     hours_back=3,
+    #     rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
+    #     excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
+    #     jsonl_path="random_output.jsonl"
+    # )
+
+
+
