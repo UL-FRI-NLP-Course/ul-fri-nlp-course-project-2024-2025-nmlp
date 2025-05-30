@@ -23,7 +23,10 @@ model_to_dtype: dict[str, torch.dtype] = {
     "cjvt/GaMS-27B-Instruct": torch.bfloat16,
 } 
 PEFT_DIR = "/d/hpc/projects/onj_fri/nmlp/PEFT/"
-IO_PAIRS_PATH = "/d/hpc/projects/onj_fri/nmlp/dp2.jsonl"
+# IO_PAIRS_PATH = "/d/hpc/projects/onj_fri/nmlp/dp2.jsonl"
+# MAX_LENGTH: int = 512
+IO_PAIRS_PATH = "/d/hpc/projects/onj_fri/nmlp/dp1.jsonl"
+MAX_LENGTH: int = 1024
 
 if not os.path.exists(PEFT_DIR):
     os.makedirs(PEFT_DIR, exist_ok=True)
@@ -62,7 +65,7 @@ def main():
         model = get_peft_model(base_model, lora_config)
         model.print_trainable_parameters()
     # Make sure the model is on device
-    model.to(device)
+    # model.to(device)
     # model.gradient_checkpointing_enable()
     
     # ---------- Actual Dataset ----------
@@ -75,8 +78,8 @@ def main():
             i = 0
             for line in f:
                 data_point = json.loads(line)
-                data["input"].append(data_point["vhod"])
-                data["output"].append(data_point["izhod"])
+                data["input"].append(data_point["input"])
+                data["output"].append(data_point["output"])
                 i += 1
         print(f"Loaded {i} input-output pairs from {IO_PAIRS_PATH}")
         return Dataset.from_dict(data)
@@ -120,11 +123,11 @@ def main():
         labels = [-100] * len(tokenized_prompt["input_ids"]) + tokenized_answer["input_ids"]
     
         # Step 4: Truncate if exceeds max_length
-        max_length = 512
-        if len(input_ids) > max_length:
-            input_ids = input_ids[:max_length]
-            attention_mask = attention_mask[:max_length]
-            labels = labels[:max_length]
+        if len(input_ids) > MAX_LENGTH:
+            print(f"Warning: truncating input ({len(input_ids)})")
+            input_ids = input_ids[:MAX_LENGTH]
+            attention_mask = attention_mask[:MAX_LENGTH]
+            labels = labels[:MAX_LENGTH]
     
         return {
             "input_ids": input_ids,
