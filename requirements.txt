@@ -5,6 +5,7 @@ striprtf
 python-Levenshtein
 spacy
 datasets
+dotenv
 
 # Tools specifically for running LLMs
 transformers
