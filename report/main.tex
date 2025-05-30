@@ -56,7 +56,7 @@
 \affiliation{\textit{Advisors: Slavko Žitnik}}
 
 % Keywords
-\Keywords{Keyword1, Keyword2, Keyword3 ...}
+\Keywords{Large language model, fine-tuning, data processing}
 \newcommand{\keywordname}{Keywords}
 
 
@@ -65,7 +65,7 @@
 %----------------------------------------------------------------------------------------
 
 \Abstract{
-The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here. The abstract goes here.
+This project investigates the automatic generation of Slovenian traffic news using large language models (LLMs), aiming to emulate the structure and content style of RTV Slovenija bulletins. We propose and compare three data preparation pipelines—basic, DP1, and DP2—which align structured traffic events from \texttt{promet.si} with reference summaries from RTF reports. The GaMS-27B-Instruct model is fine-tuned using these pipelines via instruction-tuning and LoRA adaptation. Evaluation includes lexical overlap, edit distance, and semantic similarity metrics, alongside API-based LLM scoring. Results indicate that while DP1 yields the most structurally faithful outputs, basic and DP2 variants are often preferred by LLM evaluators due to their greater flexibility. The findings suggest a trade-off between rigid formatting and content adaptability, with implications for both training strategy and prompt design in multilingual, domain-specific text generation.
 }
 
 %----------------------------------------------------------------------------------------
@@ -101,6 +101,72 @@ The abstract goes here. The abstract goes here. The abstract goes here. The abst
 \section*{Methods}
 
 \input{data}
+
+
+\section*{Baseline results}
+
+% gams-27B-Instruct
+
+As a starting point, we attempted to approach this task by simply using just common prompt engineering methods.
+To put it more bluntly, we fed the LLM with a prompt that concisely and clearly describes the task at hand and provided a sequence of shots (examples) that it should be able to follow.
+An example of this approach in action is shown in figure~\ref{fig:result_baseline}.
+It is apparent that the output is very similar to the input.
+Although, this is not necessarily bad, as long as the rules for data generation are not violated.
+
+
+\section*{Fine-Tuning: Training Data Generation and Model Adaptation}
+To fine-tune our large language models (LLMs) on domain-specific Slovenian traffic news reports, we prepared a high-quality set of input–output training examples derived from publicly available sources. This pipeline is computationally intensive due to large-scale RTF parsing, semantic deduplication, and format conversion.
+% As such, we preprocessed and extracted all pairs for the year 2022, leaving 2023–2024 for evaluation and held-out testing.
+
+\paragraph{1. Input–Output Pair Generation.}
+These pairs are stored in JSONL format for training with one object per line:
+\{ "input": "...", "output": "..." \}.
+We convert structured excel logs and corresponding RTF summaries into training examples in the format:
+
+DP1:
+
+VHOD:
+\textless flattened, cleaned input paragraph \textgreater
+
+IZHOD:
+\textless RTF-sourced summary matching the input's timestamp context (ground truth) \textgreater
+\\
+
+DP2:
+
+VHOD:
+\textless the input part of a match \textgreater
+
+IZHOD:
+\textless the output part of the match \textgreater
+
+\paragraph{2. Prompt Construction.}
+We then formatted these pairs into an instruction-tuning template. It includes:
+
+A task description (e.g. “You are a traffic report writer...”),
+
+Three few-shot examples,
+
+The current input as the final prompt, expecting model completion.
+
+The style would be similar to what the LLM would recieve as input for inference after being fine-tuned.
+
+\subsection*{3. Training Setup.}
+Models such as GaMS-2B, GaMS-9B-Instruct and GaMS-27B are fine-tuned using PEFT (LoRA) on each of the data preparation techniques, leveraging Hugging Face pipelines and mixed-precision execution. Inference outputs are saved in outputs.jsonl for evaluation. 
+
+\textbf{LoRA Configuration.} The model was fine-tuned using Low-Rank Adaptation (LoRA) with the following parameters:
+
+\begin{itemize}
+  \item \textbf{\texttt{task\_type} = \texttt{CAUSAL\_LM}} — Targets causal language modeling tasks.
+  \item \textbf{\texttt{r} = 64} — Rank of the low-rank adapter matrices.
+  \item \textbf{\texttt{lora\_alpha} = 64} — Scaling factor applied to the adapter outputs.
+  \item \textbf{\texttt{lora\_dropout} = 0.1} — Dropout probability applied to adapter layers.
+  \item \textbf{\texttt{bias} = \texttt{"none"}} — Bias terms are not adapted.
+\end{itemize}
+
+\input{results}
+
+
 
 % Use the Methods section to describe what you did an how you did it -- in what way did you prepare the data, what algorithms did you use, how did you test various solutions ... Provide all the required details for a reproduction of your work.
 
@@ -215,38 +281,6 @@ The abstract goes here. The abstract goes here. The abstract goes here. The abst
 %   geom_smooth()
 % \end{lstlisting}
 
-% %------------------------------------------------
-
-\section*{Results}
-
-\subsection*{Baseline}
-% gams-27B-Instruct
-
-As a starting point, we attempted to approach this task by simply using just common prompt engineering methods.
-To put it more bluntly, we fed the LLM with a prompt that concisely and clearly describes the task at hand and provided a sequence of shots (examples) that it should be able to follow.
-An example of this approach in actions is shown in figure~\ref{fig:result_baseline}.
-It is apparent that the output is very similar to the input.
-Although, this is not necessarily bad, as long as the rules for data generation are not violated.
-
-\begin{figure*}[t] % The * makes it span both columns
-    \begin{minted}[frame=single, fontsize=\small]{text}
-    VHOD:
-    <p><strong>Zastoji</strong></p>
-    <p>- na ljubljanski južni obvoznici od Rudnika proti razcepu Kozarje;
-        <br>- na gorenjski avtocesti od Kosez do predora Šentvid proti Kranju;
-        <br>- na štajerski avtocesti med Blagovico in Trojanami proti Celju ter pred prehodom Šentilj proti Avstriji;
-        <br>- na ljubljanski zahodni obvoznici od Kosez proti Kozarjam ter na primorski avtocesti med Ljubljano in Brezovico proti Kopru;
-        <br>- na cestah Ljubljana - Brezovica, Lesce - Bled in Šmarje - Koper.
-    </p>
-
-    IZHOD:
-    Zastoji so na cestah Šmarje-Koper in Lesce-Bled.
-    Prav tako so zastoji na zahodni in južni ljubljanski obvoznici od Kosez in Rudnika proti Primorski. Potovalni čas se na obeh odsekih podaljša za približno 15 minut.
-    Zaradi del je krajši zastoj na štajerski avtocesti med Blagovico in Trojanami proti Mariboru. Opozarjamo na nevarnost naleta.
-    \end{minted}
-    \caption{An example of LLM output generation for given input data using only prompt engineering methods.}
-    \label{fig:result_baseline}
-\end{figure*}
 
 % Use the results section to present the final results of your work. Present the results in a objective and scientific fashion. Use visualisations to convey your results in a clear and efficient manner. When comparing results between various techniques use appropriate statistical methodology.
 
@@ -263,14 +297,33 @@ Although, this is not necessarily bad, as long as the rules for data generation 
 
 \section*{Discussion}
 
-Use the Discussion section to objectively evaluate your work, do not just put praise on everything you did, be critical and exposes flaws and weaknesses of your solution. You can also explain what you would do differently if you would be able to start again and what upgrades could be done on the project in the future.
+\subsection*{Qualitative Analysis of Preparation Strategies}
+To better understand how data preparation impacts generation quality, we compared representative outputs from all three variants. DP1 yielded bulletins with high structural fidelity, closely mimicking RTV Slovenija formatting (e.g., \textit{road}~$\rightarrow$~\textit{direction}~$\rightarrow$~\textit{event}~$\rightarrow$~\textit{consequence}). However, its rigid template often caused repetitive phrasing and excluded minor events outside the 8-hour window.
+
+DP2 outputs, while lacking formal headers, showed more fluent and human-like summaries, often merging adjacent incidents effectively. These captured contextual nuance better, especially when events spanned multiple RTF paragraphs.
+
+The basic variant produced mixed results: broader inclusion improved recall but occasionally introduced outdated or misaligned events due to the absence of temporal filtering.
+
+Overall, LLM-based evaluations (e.g., DeepSeek V3) favored DP2 and basic over DP1, highlighting a trade-off between structural alignment (DP1) and natural summarization (DP2/basic). Future strategies may benefit from blending structural templates with adaptive, entity-aware inputs.
+
+% 
+
+\subsection*{Future Work}
+
+Future improvements could include integrating \emph{named-entity alignment metrics} to better assess factual consistency (e.g., road names, locations). Adding \emph{BERTScore} or other semantic-aware metrics would complement lexical evaluations.
+
+On the data side, \emph{adaptive temporal filtering} and hybrid strategies that combine DP1's structure with DP2's flexibility could improve both coverage and style.
+
+Model-wise, exploring \emph{constrained decoding} or \emph{reinforcement tuning} (e.g., RLHF) may help enforce formatting and factual accuracy. Finally, incorporating \emph{external data sources} such as weather or live traffic sensors could enable real-time applications.
+
+
 
 
 %------------------------------------------------
 
-\section*{Acknowledgments}
+% \section*{Acknowledgments}
 
-Here you can thank other persons (advisors, colleagues ...) that contributed to the successful completion of your project.
+% Here you can thank other persons (advisors, colleagues ...) that contributed to the successful completion of your project.
 
 
 %----------------------------------------------------------------------------------------
@@ -279,5 +332,11 @@ Here you can thank other persons (advisors, colleagues ...) that contributed to 
 \bibliographystyle{unsrt}
 \bibliography{report}
 
+\clearpage
+\input{baseline}
+\input{basic_output}
+\input{dp1_output}
+\input{dp2_output}
+\input{chatGPT_eval}
 
 \end{document}

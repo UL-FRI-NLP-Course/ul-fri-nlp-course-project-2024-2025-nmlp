@@ -1,0 +1,38 @@
+\begin{figure*}[t]
+    \centering
+    \caption*{\textbf{Appendix: Manual ChatGPT Comparative Evaluation of Output Sets}}
+
+    \begin{minted}[frame=single, fontsize=\small]{text}
+Output Set        Score  
+-------------------------
+basic_outputs     4 / 10  
+dp1_outputs       9 / 10  
+dp2_outputs       6 / 10  
+
+Rationale:
+1. basic_outputs (4/10)
+   - No standard header (“Prometne informacije ...”).
+   - Inconsistent ordering of road, direction, event.
+   - Missing “Podatki o prometu.” section title.
+   - Uneven naming conventions and event grouping.
+
+2. dp1_outputs (9/10)
+   - Correct header and date/time/program line.
+   - Includes “Podatki o prometu.” before events.
+   - Consistent sentence structure:
+       road + direction → event → consequence.
+   - Proper motorway names and Slovene terminology.
+   - Minor slip-ups in program numbering/order.
+
+3. dp2_outputs (6/10)
+   - Well-formed event sentences (location, reason, impact).
+   - Omits the bulletin framing (header + title).
+   - Lacks blank lines separating items.
+   - Presents raw list rather than full RTF-style bulletin.
+    \end{minted}
+
+    \caption{Scores and qualitative rationale for each output set,  
+             based on the formatting rules in \texttt{PROMET.docx}  
+             and style exemplars in the provided RTF files by ChatGPT.}
+    \label{fig:appendix_comparison}
+\end{figure*}

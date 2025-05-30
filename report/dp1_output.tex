@@ -1,0 +1,47 @@
+\begin{figure*}[t]
+    \centering
+    \caption*{\textbf{Appendix: DP1 Prompt–Response Format Example}}
+
+    \begin{minted}[frame=single, fontsize=\small]{text}
+    VHOD:
+
+    Prometne informacije       18. 08. 2024   \t   01.04           2. program
+    
+    Podatki o prometu.
+    
+    Zastoji Gorenjska: - Na gorenjski avtocesti med Lescam in predorom Karavanke proti Avstriji, 10 km. Izvoz Lipce je dovoljen samo za lokalni promet. - Na cestah Jesenice - Hrušica in Podkoren - Korensko sedlo. Delo na cesti Cesta Senarska - Lenart , pri Sveti Trojici bo zaprta do nedelje,18. avgusta, do 20. ure. Obvoz bo potekal po državnih cestah in po avtocesti med priključkoma Lenart – Sv. Trojica in obratno, tudi za vozila brez vinjete vendar samo med tema dvema priključkoma. Več o delovnih zaporah v prometni napovedi . Buy vignette for Slovenia online Thererore long queues are expected in entering points from Austria to Slovenia, i.e. Karavanke tunnel (A2) and Sentilj/Spielfeld crossing (A1). Important reason for these queues is that drivers don't have vignette for Slovenian roads and have to buy them at the border. To reduce or even avoid long waiting periods drivers are strongly recommended to buy vignette for Slovenian motorways online. They can do it here . DARS Janko Poženel, GNC Prireditve  Tovorni promet   Italija
+    
+    IZHOD:
+    Prometne informacije        18. 08. 2024       01.04           2. program
+    
+    Podatki o prometu.
+    
+    Na primorski avtocesti je zastoj na izvozu Brezovica proti Kopru, čas vožnje se tam podaljša za približno 10 minut.
+    
+    Na gorenjski avtocesti je zastoj pred predorom Karavanke proti Avstriji, čas potovanja se tam podaljša za približno pol ure.
+    
+    Na glavni cesti Maribor-Hoče so zastoji v obe smeri med priključkom Maribor-vzhod in krožiščem Pobrežje. V smeri proti Mariboru je promet oviran na vipavski hitri cesti med priključkoma Vipava in Selo, zaradi pokvarjenega vozila.
+    
+    Na mejnih prehodih Gruškovje in Obrežje vozniki tovornih vozil na vstop v državo čakajo 2 uri, na Obrežju pa tudi na izstop.
+
+
+    GROUND TRUTH:
+    Prometne informacije      18.08.2024              05.00          1. in 2. program
+    
+    Podatki o prometu.
+    
+    Na štajerski avtocesti je zaradi prometne nesreče pred priključkom Fram proti Ljubljani zaprt vozni pas.
+    
+    Na pomurski avtocesti je na izvozu Cerkvenjak proti Mariboru zaradi pokvarjenega vozila oviran promet.
+    
+    Na gorenjski avtocesti je med Lescam in predorom Karavanke proti Avstriji približno 2 kilometre dolg zastoj. Izvoz Lipce je dovoljen samo za lokalni promet.
+    
+    Taradi prireditve bo v Ljubljani od 8-ih do 15-ih zaprta Štajerska cesta, med rondojem Tomačevo in rondojem s Kranjčevo cesto.
+    
+    Cesta Senarska - Lenart pa bo zaradi del pri Sveti Trojici zaprta do 20-tih. Obvoz je po državnih cestah in po avtocesti med priključkoma Lenart - Sv. Trojica in obratno, tudi za vozila brez vinjete vendar samo med tema dvema priključkoma.
+
+    \end{minted}
+
+    \caption{Example of output from GaMS-27B-Instruct using the DP1 method for prompt construction and fine-tuning. The corresponding ground truth summary is shown for comparison.}
+    \label{fig:result_dp1}
+\end{figure*}

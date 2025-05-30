@@ -10,53 +10,84 @@ We used an open-source large language model (LLM) named GaMS-27B-Instruct\footno
 Since our data is basically completely in Slovenian, we needed an LLM that was trained specifically in this language.
 Technically speaking, it is a fine-tuned version of the Google Gemma2 LLM\footnote{https://huggingface.co/google/gemma-2-27b}, so it performs well both on English and Slovenian.
 
-\subsubsection*{Preprocessing pipeline}
+\subsubsection*{Data preprocessing variants}
+We chose two implement two different preprocessing pipelines:
+\begin{itemize}
+    \item - Data preprocessing 1 (DP1), which creates input-output pairs of reports by taking an output (given a date) and pairing it with a flattened-input using multiple temporally-close inputs
+    \item - Data preprocessing 2 (DP2), which splits the reports into paragraphs and tries to make input-output pairs using various NLP techniques for matching.
+\end{itemize}
 
-The raw input consists of structured traffic event logs in Excel format provided by the \texttt{promet.si} portal, and human-written traffic reports in RTF format, broadcast by RTV Slovenija. To align these for training and evaluation, we implemented the following preprocessing pipeline:
+Both of these aim to take the given data and convert it into a specific format: a list of input-output pairs that we would like the LLM to ``learn from''.
 
-\paragraph{1. Time-based Filtering.}
-To align structured input data with its corresponding RTF report, we apply a temporal filtering step. Specifically, we extract all rows from the Excel dataset whose timestamps fall within a fixed window \emph{prior} to the timestamp of the selected RTF report (typically 1 to 8 hours). This windowed extraction is necessary because RTV traffic reports do not reflect only newly observed events, but also often reiterate unresolved or ongoing events from previous intervals. For example, a road closure or prolonged congestion may appear in multiple consecutive reports until the situation is resolved. By including several hours of prior data, we ensure that the input context is sufficient to reconstruct both new and persisting traffic conditions reflected in the human-authored report.
+\subsubsection*{Preprocessing Pipeline (DP1)}
+
+To align structured traffic logs from \texttt{promet.si} with RTV Slovenija's RTF reports, we designed a multi-step preprocessing pipeline:
+
+\paragraph{1. Temporal Filtering.}
+We extract all structured events within a 1–8 hour window prior to the RTF timestamp, ensuring coverage of both new and persistent incidents.
 
 \paragraph{2. Cleaning and Normalization.}
-All text fields undergo normalization using HTML stripping (via BeautifulSoup), whitespace collapsing, and newline removal. Timestamp fields are converted to \texttt{datetime} objects for temporal grouping.
+All fields are cleaned using HTML stripping, whitespace collapsing, and timestamp normalization to \texttt{datetime}.
 
 \paragraph{3. Sentence Extraction and Deduplication.}
-Each row is processed into individual sentences. Sentences are cleaned and deduplicated using one of several strategies:
+Each row is split into sentences and deduplicated using:
 \begin{itemize}
-  \item \textbf{Exact deduplication:} Removes literal duplicates across rows.
-  \item \textbf{Semantic deduplication:} Uses Sentence-BERT embeddings and cosine similarity to group semantically similar sentences ($> 0.7$) and retain a representative.
+  \item \textbf{Exact match:} Removes literal duplicates.
+  \item \textbf{Semantic match:} Uses Sentence-BERT with cosine similarity $> 0.7$.
 \end{itemize}
 
-\paragraph{4. Content Selection Strategies.}
-We evaluate multiple strategies to retain the most relevant information:
+\paragraph{4. Content Selection.}
+We retain key sentences via:
 \begin{itemize}
-  \item \textbf{Longest informative sentence:} Keeps the longest sentence within a semantic group.
-  \item \textbf{TF-IDF selection:} Scores sentences using TF-IDF and selects the highest-scoring one per group.
-  \item \textbf{Named entity preference:} Prefers sentences containing domain-specific keywords (e.g., road names, locations, traffic event types).
+  \item Longest informative sentence,
+  \item TF-IDF scoring,
+  \item Named entity filtering (e.g., roads, locations).
 \end{itemize}
 
-\paragraph{5. Flat Input Construction.}
-Once the relevant and deduplicated sentences are selected, they are assembled into a single paragraph to be used as the prompt input for language model generation. We explored several formatting strategies to mimic the structure and tone of actual RTV Slovenija traffic broadcasts:
-
+\paragraph{5. Input Formatting.}
+Selected sentences are flattened into either:
 \begin{itemize}
-    \item[\textbf{a)}] \textbf{Basic concatenation.} All selected sentences are simply joined with a space delimiter to form one long paragraph that still includes html tags. This approach ensures full coverage of the input without introducing artificial breaks or sectioning.
-    
-    \item[\textbf{b)}] \textbf{Structured template with RTV header.} The paragraph is prefixed with a timestamp header consistent with RTV Slovenija formatting:
-    \begin{quote}
-    \texttt{Prometne informacije \hspace{1em} DD. MM. YYYY \hspace{1em} HH.MM \hspace{1em} 2. program}
-    \end{quote}
-    followed by a standard opening:
-    \begin{quote}
-    \texttt{Podatki o prometu.}
-    \end{quote}
-    This approach makes the output stylistically and structurally comparable to the ground truth RTF reports, enabling more robust evaluation.
-
+  \item[\textbf{(a)}] Plain concatenation (minimal preprocessing), or
+  \item[\textbf{(b)}] RTV-style header with “\texttt{Prometne informacije DD.MM.YYYY HH.MM}” and “\texttt{Podatki o prometu.}” prefix.
 \end{itemize}
 
-The structured variant (b) most closely resembles the output format expected in downstream evaluation and human interpretation. It might be also more suitable for fine-tuning models in tasks such as summarization or report generation.
+\paragraph{6. RTF Matching.}
+The closest-in-time RTF is parsed via regex to extract the reference summary.
 
-\paragraph{6. RTF Report Matching.}
-The RTF file closest in time to the target timestamp is parsed and used as the reference summary. Date and time are extracted from the header line using regular expressions.
+This pipeline produces coherent model inputs structurally aligned with real RTV outputs and supports both evaluation and fine-tuning.
 
-This preprocessing pipeline enables consistent comparison between structured data and human-written summaries, and prepares high-quality input for evaluation or language model fine-tuning.
 
+% \subsection*{Fine-tuning}
+% In order for our data to be used in fine-tuning. we made input-output pairs from year 2022, as the procedure was long and computationally slow as well as keeping some information hidden from the model so it could be used as an evaluation set. 
+
+\subsubsection*{Preprocessing pipeline (DP2)}
+This pipeline is somewhat simpler in nature.
+It takes a given output and finds its best possible corresponding input.
+The stages include:
+\begin{itemize}
+    \item Split given report (output) into individual events.
+    \item Find and split temporally-close input data (from excel).
+    % \item Split input data also into events.
+    \item Compare each event from the given report with all events from the input.
+    \item Create input-output pairs using matches that meet a confidence threshold.
+\end{itemize}
+
+\paragraph{1. Splitting into events.}
+After visually observing the dataset, we observed that the outputs (individual RTF files) are split into multiple paragraphs and that each paragraph corresponds to one event or a group of related events.
+In other words, the contents of different paragraphs pertain to different news stories.
+Additionally, each line in the input data (excel line) consist of multiple columns that can be (carefully) merged.
+After being merged, we notice that this data can also be split into events by the html tags.
+After this stage, we split every data point in the input and output into a series of events.
+
+\paragraph{2. Finding temporally-close input data.}
+This stage is fairly similar to its analogue from DP1.
+We simply take all the input data from a time-window around the time that the output data was obtained and split it into a flat list of events (outputs).
+
+\paragraph{3. Matching inputs to a given output.}
+After the previous stage, we have a single output event and a list of candidate input events.
+We implemented a multi-stage paragraph-comparison procedure.
+This procedure takes into account the number of matching words, proper nouns (PN) and named entities (NE).
+The latter two have a significant overlap since they both roughly refer to a specific person, location, object etc., but are not the same in their implementation.
+We searched for pairs of matching words using Levenshtein distance on the lemmatized paragraphs (maximum distance of 1 for a match).
+Any given input-output pair (of events) had to pass a series of trials, where it would need to pass an adjusted minimum threshold for the number matching words, PNs and NEs.
+Finally, the pair needed to also achieve a high enough score using vector embeddings comparison.

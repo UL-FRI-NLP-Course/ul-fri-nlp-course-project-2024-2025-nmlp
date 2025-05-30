@@ -1,0 +1,35 @@
+\begin{figure*}[t]
+    \centering
+    \caption*{\textbf{Appendix: Prompt–Response Format Example}}
+
+    \begin{minted}[frame=single, fontsize=\small]{text}
+    VHOD:
+    <p><strong>Zastoji</strong></p>
+    <p>- na ljubljanski južni obvoznici od Rudnika proti razcepu Kozarje;
+        <br>- na gorenjski avtocesti od Kosez do predora Šentvid proti Kranju;
+        <br>- na štajerski avtocesti med Blagovico in Trojanami proti Celju ter pred prehodom Šentilj proti Avstriji;
+        <br>- na ljubljanski zahodni obvoznici od Kosez proti Kozarjam ter na primorski avtocesti med Ljubljano in Brezovico proti Kopru;
+        <br>- na cestah Ljubljana - Brezovica, Lesce - Bled in Šmarje - Koper.
+    </p>
+
+    IZHOD:
+    Zastoji so na cestah Šmarje-Koper in Lesce-Bled.
+    Prav tako so zastoji na zahodni in južni ljubljanski obvoznici od Kosez in Rudnika proti Primorski. Potovalni čas se na obeh odsekih podaljša za približno 15 minut.
+    Zaradi del je krajši zastoj na štajerski avtocesti med Blagovico in Trojanami proti Mariboru. Opozarjamo na nevarnost naleta.
+    \end{minted}
+
+    \caption{An example of LLM output generation for given input data using only prompt engineering methods. 
+    The input (VHOD) is a flattened and HTML-tagged paragraph derived from structured traffic events, while the output (IZHOD) is a free-form textual summary in the style of RTV Slovenija traffic reports.}
+    \label{fig:result_baseline}
+\end{figure*}
+
+% This example illustrates the format used during inference and instruction fine-tuning. The input (VHOD) is a flattened and HTML-tagged paragraph derived from structured traffic events, while the output (IZHOD) is a free-form textual summary in the style of RTV Slovenija traffic reports.
+
+    % VHOD:
+    % <p><strong>Zastoji</strong></p>
+    % <p>- na ljubljanski južni obvoznici od Rudnika proti razcepu Kozarje;
+    %     <br>- na gorenjski avtocesti od Kosez do predora Šentvid proti Kranju;
+    %     <br>- na štajerski avtocesti med Blagovico in Trojanami proti Celju ter pred prehodom Šentilj proti Avstriji;
+    %     <br>- na ljubljanski zahodni obvoznici od Kosez proti Kozarjam ter na primorski avtocesti med Ljubljano in Brezovico proti Kopru;
+    %     <br>- na cestah Ljubljana - Brezovica, Lesce - Bled in Šmarje - Koper.
+    % </p>

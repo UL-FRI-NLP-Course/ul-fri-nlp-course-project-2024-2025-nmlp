@@ -1,0 +1,82 @@
+\section*{Evaluation}
+
+To assess the quality of model-generated outputs, we conducted inference across three distinct data preparation pipelines: \textit{Basic}, \textit{DP1}, and \textit{DP2}. Each setting was evaluated over 20 randomly selected samples.
+
+The \textbf{Basic prompt} consists of raw traffic event descriptions concatenated with minimal preprocessing and embedded HTML tags. An example of the generated output under this configuration is shown in Figure~\ref{fig:result_baseline}. As a simple enhancement, we then applied basic text cleaning—stripping HTML tags and collapsing whitespace—which resulted in improved coherence and stylistic alignment with human-written summaries. This cleaned variant is illustrated in Figure~\ref{fig:result_basic}.
+
+To further increase relevance and faithfulness to human reports, we developed two structured pipelines:
+\begin{itemize}
+    \item \textbf{DP1} leverages temporal filtering of structured data based on timestamp alignment with a single target RTF report. The result is a longer, context-rich prompt paired with a verified human-written summary, enabling direct output–reference comparison (Figure~\ref{fig:result_dp1}).
+    
+    \item \textbf{DP2}, in contrast, doesn't necessarily take the whole output RTF into account.
+    It matches paragraphs from it to paragraphs from a flattened list of inputs.
+    While this makes precise reference-based evaluation more difficult, the generated output (Figure~\ref{fig:result_dp2}) remains interpretable and suitable for qualitative inspection.
+\end{itemize}
+
+These examples, provided in the appendix, highlight the model’s varying performance across input strategies and offer insight into the impact of preprocessing on generation quality.
+
+
+\begin{table}[ht]
+  \centering
+  \caption{Summary of evaluation metrics on generated vs.\ ground-truth traffic reports}
+  \label{tab:metrics_summary}
+  \begin{tabular}{lrr}
+    \toprule
+    \textbf{Metric}           & \textbf{Median} & \textbf{Std.\ Dev.} \\
+    \midrule
+    F1 Token Overlap          & 0.3877          & 0.0553              \\
+    Jaccard Similarity        & 0.2405          & 0.0433              \\
+    BLEU Score                & 0.0898          & 0.0432              \\
+    ROUGE-L F\textsubscript{measure} & 0.2859    & 0.0474              \\
+    Levenshtein Ratio         & 0.5118          & 0.0389              \\
+    Embedding Similarity      & 0.8620          & 0.0399              \\
+    Precision (Tokens)        & 0.3491          & 0.0760              \\
+    Recall (Tokens)           & 0.4208          & 0.1100              \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+The suite of metrics captures three facets of quality:
+\begin{enumerate}
+  \item \textbf{Lexical Overlap:}
+    F1 Token Overlap (\(\approx 0.39\)) and Jaccard Similarity (\(\approx 0.24\)) indicate moderate word‐level agreement.
+    BLEU (\(\approx 0.09\)) and ROUGE-L (\(\approx 0.29\)) remain low, as they penalize missing or reordered n-grams in these relatively long texts.
+  \item \textbf{Character-Level Edit Distance:}
+    The Levenshtein Ratio (\(\approx 0.51\)) reveals that only about half of all characters align in sequence, reflecting substantial paraphrasing.
+  \item \textbf{Semantic Fidelity:}
+    A high Embedding Similarity (\(\approx 0.86\)) demonstrates that, despite surface‐form differences, the model’s outputs convey nearly the same meaning as the ground truth.
+    Token-level Precision (\(\approx 0.35\)) vs.\ Recall (\(\approx 0.42\)) suggests the model includes extra or varied content (lower precision) while covering most ground-truth concepts (higher recall).
+\end{enumerate}
+
+\noindent
+\textbf{Conclusion:}
+Although literal n-gram overlap is limited — resulting in low BLEU/ROUGE scores—the strong semantic correspondence suggests the core content is well captured. Future work should target entity-level fidelity and surface-form consistency (e.g., via constrained decoding or slot-filling) to boost lexical metrics without sacrificing meaning.
+
+
+\subsection*{API LLM evaluation}
+
+As shown in Table~\ref{tab:evaluation-summary}, \emph{basic\_outputs.jsonl} scored highest (4.05), \emph{dp2\_outputs.jsonl} was intermediate (3.91), and \emph{dp1\_outputs.jsonl} scored lowest (2.85). Scores were obtained via an API-driven LLM (DeepSeek V3 0324) prompted to rate each bulletin (1--10) on structure and content against RTF exemplars. This contrasts with earlier automated and structural analyses that favored the \emph{dp1} format, suggesting human judges prize flexibility and contextual clarity over rigid templating. The large standard deviations further reveal variability in bulletin quality.
+
+Interestingly, both fine-tuned variants achieved a somewhat lower score than the basic variant.
+This puts into question the effectiveness of the FT pipeline.
+However, finding the main culprit for this result is not very straightforward.
+Both data preprocessing and FT procedure include many parameters that can be futher tweaked.
+Additionally, the quantity, quality and variety of the data itself surely has some impact on the results.
+
+\begin{table}[ht]
+  \centering
+  \caption{DeepSeek V3 API Evaluation Scores Summary}
+  \label{tab:evaluation-summary}
+  \begin{tabular}{lcc}
+    \toprule
+    Dataset               & Average Score & Std.\ Dev.\ \\
+    \midrule
+    basic\_outputs.jsonl  & 4.05          & 1.9049      \\
+    dp1\_outputs.jsonl    & 2.85          & 1.1522      \\
+    dp2\_outputs.jsonl    & 3.9130        & 1.8630      \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
