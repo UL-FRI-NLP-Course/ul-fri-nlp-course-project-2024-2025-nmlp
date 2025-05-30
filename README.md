@@ -66,3 +66,15 @@ Before running the whole process, you can adjust some variables in `fine_tunning
 - `MODEL_NAME` to choose the size of the model you want to FT (we used 27B variant).
 - `PEFT_DIR` path to where the checkpoints will be saved to.
 Now run the process using `python -m fine_tunning.fine_tunning`.
+
+## Inference
+Disclaimer: When running inference for multiple prompts, you may need to rerun the script in case you run out of VRAM.
+### Basic inference
+Basic inference is demonstrated in `src/gams.py`. It takes a subset of the inputs (file `data/dp2_inputs.jsonl`, generated using `evaluation/subset_preparation.py`) and generates reports for every input.
+The result of this is saved to `data/basic_outputs.jsonl`.
+### Inference using fine-tuned model with DP1
+Basic inference is demonstrated in `fine_tunning/dp1_inf.py`. It takes a subset of the inputs (file `data/dp1_inputs.jsonl`) and generates reports for every input.
+The result of this is saved to `data/dp1_outputs.jsonl`.
+### Inference using fine-tuned model with DP2
+Basic inference is demonstrated in `fine_tunning/dp2_inf.py`. It takes a subset of the inputs (file `data/dp2_inputs.jsonl`, generated using `evaluation/subset_preparation.py`) and generates reports for every input.
+The result of this is saved to `data/dp2_outputs.jsonl`.
