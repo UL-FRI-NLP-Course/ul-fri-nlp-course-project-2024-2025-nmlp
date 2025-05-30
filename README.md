@@ -92,5 +92,5 @@ The result of this is saved to `data/dp2_outputs.jsonl`.
 We evaluate the inference results using an external LLM provider.
 Create an account at [OpenRouter](https://openrouter.ai/) and then get your api key [here](https://openrouter.ai/deepseek/deepseek-chat-v3-0324:free/api).
 Then, create a `.env` file in the project root and paste `DEEPSEEK_API_KEY=[YOUR_API_KEY]` in it.
-Now you can run evaluation using `python -m evaluation.llm_evaluation_2`.
+Now you can run evaluation using `python -m evaluation.llm_evaluation`.
 This will give a score from 1 to 10 for the basic (`data/basic_outputs.jsonl`), DP1 (`data/dp1_outputs.jsonl`) and DP2 (`data/dp2_outputs.jsonl`) variant of inference.

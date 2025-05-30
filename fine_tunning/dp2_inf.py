@@ -4,7 +4,7 @@ import json
 import time
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from peft         import PeftConfig, PeftModel
-from evaluation.llm_evaluation_2 import GENERATION_INSTRUCTIONS
+from evaluation.llm_evaluation import GENERATION_INSTRUCTIONS
 
 INPUTS_PATH: str = "data/dp2_inputs.jsonl"
 OUTPUT_PATH: str = "data/dp2_outputs.jsonl"
