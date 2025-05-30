@@ -50,6 +50,15 @@ python -m spacy download sl_core_news_lg # Spacy trained pipeline for Slovenian
 ```
 We recommend running any python scripts as modules, e.g.: `python -m path.to.file` instead of `python path/to/file.py`.
 
+## Model download
+The scripts will automatically download the language models to `~/.cache/huggingface`.
+If you're running this on the HPC cluster, you can just create a symlink to the shared directory:
+```bash
+# Optionally make a backup of existing directory
+# mv ~/.cache/huggingface ~/.cache/huggingface.bak
+ln -s /d/hpc/projects/onj_fri/nmlp/huggingface ~/.cache/huggingface
+```
+
 ## Data preparation
 ### DP1
 TODO
