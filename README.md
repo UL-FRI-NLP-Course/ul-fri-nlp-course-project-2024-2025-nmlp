@@ -87,3 +87,10 @@ The result of this is saved to `data/dp1_outputs.jsonl`.
 ### Inference using fine-tuned model with DP2
 Basic inference is demonstrated in `fine_tunning/dp2_inf.py`. It takes a subset of the inputs (file `data/dp2_inputs.jsonl`, generated using `evaluation/subset_preparation.py`) and generates reports for every input.
 The result of this is saved to `data/dp2_outputs.jsonl`.
+
+## LLM Evaluation
+We evaluate the inference results using an external LLM provider.
+Create an account at [OpenRouter](https://openrouter.ai/) and then get your api key [here](https://openrouter.ai/deepseek/deepseek-chat-v3-0324:free/api).
+Then, create a `.env` file in the project root and paste `DEEPSEEK_API_KEY=[YOUR_API_KEY]` in it.
+Now you can run evaluation using `python -m evaluation.llm_evaluation_2`.
+This will give a score from 1 to 10 for the basic (`data/basic_outputs.jsonl`), DP1 (`data/dp1_outputs.jsonl`) and DP2 (`data/dp2_outputs.jsonl`) variant of inference.
