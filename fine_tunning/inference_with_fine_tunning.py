@@ -1,16 +1,24 @@
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
-from peft import PeftModel, PeftConfig
-from transformers import pipeline
 import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from peft         import PeftConfig, PeftModel
 
-PEFT_DIR = "/d/hpc/projects/onj_fri/peft_ah/2b-dp1" # change according to the model
-model_id = "cjvt/GaMS-2B"  # Change to "cjvt/GaMS-9B-Instruct" or "cjvt/GaMS-27B-Instruct" as needed
+# Path to your adapter
+# PEFT_DIR = "/d/hpc/projects/onj_fri/peft_ah/2B-dp2/outputs/checkpoint-6661"
+# model_id = "cjvt/GaMS-2B"
 
-# Load PEFT config to get base model
+PEFT_DIR = "/d/hpc/projects/onj_fri/peft_ah/9b-instr-dp2"
+model_id = "cjvt/GaMS-9B-Instruct"
+
+# 1) Load the adapter config to discover the base model name
 config = PeftConfig.from_pretrained(PEFT_DIR)
-base_model = AutoModelForSeq2SeqLM.from_pretrained(config.base_model_name_or_path)
-model = PeftModel.from_pretrained(base_model, PEFT_DIR)
-tokenizer = AutoTokenizer.from_pretrained(PEFT_DIR)
+base_name = config.base_model_name_or_path
+
+# 2) Load tokenizer & base model
+tokenizer = AutoTokenizer.from_pretrained(base_name)
+model     = AutoModelForCausalLM.from_pretrained(base_name)
+
+# 3) Wrap the base model with your PEFT adapter
+model = PeftModel.from_pretrained(model, PEFT_DIR)
 
 model_to_dtype: dict[str, torch.dtype] = {
     "cjvt/GaMS-2B": torch.float32,
@@ -22,10 +30,10 @@ model_to_dtype: dict[str, torch.dtype] = {
 # pline = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
 pline = pipeline(
     "text-generation",
-    model=model_id,
-    # device_map="cuda",
+    model=model,
     device_map="auto", # Multi-GPU
     torch_dtype=model_to_dtype[model_id],
+    tokenizer=tokenizer,
 )
 
 

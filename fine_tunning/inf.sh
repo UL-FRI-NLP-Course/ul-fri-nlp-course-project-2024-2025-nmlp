@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=inference
-#SBATCH --output=outputs/inf_%j.log
-#SBATCH --error=errors/inf_%j.log
+#SBATCH --job-name=9b-inference
+#SBATCH --output=outputs/9b-inf_%j.log
+#SBATCH --error=errors/9b-inf_%j.log
 #SBATCH --time=24:00:00
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
