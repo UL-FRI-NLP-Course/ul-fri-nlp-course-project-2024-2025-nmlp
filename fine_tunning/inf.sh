@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=dp1-9b-ft
-#SBATCH --output=outputs/dp1-9B-instr-ft_gams_%j.log
-#SBATCH --error=errors/dp1-9B-instr-ft_gams_%j.log
+#SBATCH --job-name=inference
+#SBATCH --output=outputs/inf_%j.log
+#SBATCH --error=errors/inf_%j.log
 #SBATCH --time=24:00:00
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
@@ -17,13 +17,13 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate gams
 
 
-echo "Starting GaMS fine-tuning job"
+echo "Starting inference job"
 echo "Running on node: $(hostname)"
 
 # Ensure Hugging Face cache uses scratch if needed
 # export TRANSFORMERS_CACHE=$SLURM_TMPDIR/hf_cache
 
 # Run your script
-srun python fine_tunning.py
+srun python inference_with_fine_tunning.py
 
 echo "Job finished"
