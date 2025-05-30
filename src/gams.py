@@ -1,9 +1,9 @@
 from transformers import pipeline
 import torch
 
-# model_id = "cjvt/GaMS-2B"
+model_id = "cjvt/GaMS-2B"
 # model_id = "cjvt/GaMS-9B-Instruct"
-model_id = "cjvt/GaMS-27B-Instruct"
+# model_id = "cjvt/GaMS-27B-Instruct"
 
 model_to_dtype: dict[str, torch.dtype] = {
     "cjvt/GaMS-2B": torch.float32,
