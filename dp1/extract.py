@@ -246,7 +246,7 @@ def create_flat_input(input='filtered_traffic_cleaned.xlsx', output='flat_prompt
 def prepare_prompt_from_datetime(
     timestamp_str="2022-01-30 00:00:00",
     hours_back=3,
-    rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
+    rtf_base="/Podatki - rtvslo.si",
     excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
     temp_excel="filtered_traffic.xlsx",
     temp_cleaned="filtered_traffic_cleaned.xlsx",
@@ -290,7 +290,7 @@ def get_prompt_and_output(timestamp_str, hours_back, rtf_base, grouping_fn=group
     )
     return prompt_input, rtf_output
 
-def prepare_input_output_pairs(start_date="2022-01-2 12:30:00", end_date="2024-12-2 23:30:00", hours_back=24, rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si", json_path="input_output_pairs.json"):
+def prepare_input_output_pairs(start_date="2022-01-2 12:30:00", end_date="2024-12-2 23:30:00", hours_back=24, rtf_base="/RTVSlo/Podatki - rtvslo.si", json_path="input_output_pairs.json"):
     current_date = pd.to_datetime(start_date)
     end_date_dt = pd.to_datetime(end_date)
     pairs = []
@@ -343,7 +343,7 @@ def process_rtf_file(args):
 
 def generate_input_output_pairs_fast(
     excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
-    rtf_base="C:/.../RTVSlo/Podatki - rtvslo.si",
+    rtf_base="RTVSlo/Podatki - rtvslo.si",
     start_date="2022-01-30 00:00:00",
     end_date="2022-01-30 23:59:59",
     hours_back=3,
@@ -537,7 +537,6 @@ if __name__ == "__main__":
     # prepare_prompt_from_datetime(
     #     timestamp_str="2022-01-30 15:30:00",
     #     hours_back=4,
-    #     rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
     #     excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx"
     # )
 
@@ -546,7 +545,6 @@ if __name__ == "__main__":
     # get_prompt_and_output(
     #     timestamp_str="2022-01-30 15:30:00",
     #     hours_back=4,
-    #     rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si"
     # )
 
     # prepare_input_output_pairs:
@@ -555,7 +553,6 @@ if __name__ == "__main__":
     #     start_date="2022-01-30 00:00:00",
     #     end_date="2022-01-30 23:59:59",
     #     hours_back=4,
-    #     rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
     #     json_path="pairs.json"
     # )
 
@@ -563,7 +560,6 @@ if __name__ == "__main__":
     # Faster batch method for creating all pairs between Excel and RTFs.
     # generate_input_output_pairs_fast(
     #     excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
-    #     rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
     #     start_date="2022-01-30 00:00:00",
     #     end_date="2022-01-30 23:59:59",
     #     hours_back=4,
@@ -581,7 +577,6 @@ if __name__ == "__main__":
     #     start_str="2023-01-01 00:00:00",
     #     end_str="2024-12-31 23:59:59",
     #     hours_back=3,
-    #     rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
     #     excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
     #     jsonl_path="random_output.jsonl"
     # )
