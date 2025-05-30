@@ -166,7 +166,23 @@ client = OpenAI(
   api_key=API_KEY,
 )
 
-def get_score(user_prompt: str) -> float | None:
+def create_user_prompt(report_in: str, report_out: str) -> str:
+    return f"""
+### ZAČETEK PODATKOV S SPLETNE STRANI
+
+{report_in}
+
+### KONEC PODATKOV S SPLETNE STRANI
+
+### ZAČETEK GENERIRANEGA POROČILA
+
+{report_out}
+
+### KONEC GENERIRANEGA POROČILA
+
+""".strip()
+
+def get_score(report_in: str, report_out: str) -> float | None:
     completion = client.chat.completions.create(
         model=MODEL_NAME,
         messages = [
@@ -176,7 +192,7 @@ def get_score(user_prompt: str) -> float | None:
             },
             {
                 "role": "user",
-                "content": user_prompt,
+                "content": create_user_prompt(report_in, report_out),
             },
         ],
         # response_format=response_format,
@@ -193,8 +209,9 @@ def get_score(user_prompt: str) -> float | None:
     return score
 
 def main():
-    user_prompt = "zelo dobro poročilo"
-    print(get_score(user_prompt))
+    report_in = "danes je bla nesreca na ljubljanski obvoznici"
+    report_out = "zastoj na avtocesti"
+    print(get_score(report_in, report_out))
 
 if __name__ == "__main__":
     main()
