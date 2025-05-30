@@ -25,37 +25,6 @@ model_to_dtype: dict[str, torch.dtype] = {
     "cjvt/GaMS-27B-Instruct": torch.bfloat16,
 } 
 
-# 1) Load the adapter config to discover the base model name
-config = PeftConfig.from_pretrained(PEFT_DIR)
-base_name = config.base_model_name_or_path
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-# 2) Load tokenizer & base model
-tokenizer = AutoTokenizer.from_pretrained(base_name)
-model     = AutoModelForCausalLM.from_pretrained(
-    base_name,
-    device_map=device,
-    torch_dtype=model_to_dtype[model_id],
-)
-
-# 3) Wrap the base model with your PEFT adapter
-model = PeftModel.from_pretrained(
-    model, PEFT_DIR,
-    device_map=device,
-    torch_dtype=model_to_dtype[model_id],
-)
-
-# pline = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
-pline = pipeline(
-    "text-generation",
-    model=model,
-    device_map=device,
-    torch_dtype=model_to_dtype[model_id],
-    tokenizer=tokenizer,
-)
-
-
 shot_1: str = """
     VHOD:
     na ljubljanski južni obvoznici od Rudnika proti razcepu Kozarje. na gorenjski avtocesti od Kosez do predora Šentvid proti Kranju. na štajerski avtocesti med Blagovico in Trojanami proti Celju ter pred prehodom Šentilj proti Avstriji. na ljubljanski zahodni obvoznici od Kosez proti Kozarjam ter na primorski avtocesti med Ljubljano in Brezovico proti Kopru. na cestah Ljubljana - Brezovica, Lesce - Bled in Šmarje - Koper.
@@ -209,4 +178,34 @@ def main():
     print("Done")
 
 if __name__ == "__main__":
+    # 1) Load the adapter config to discover the base model name
+    config = PeftConfig.from_pretrained(PEFT_DIR)
+    base_name = config.base_model_name_or_path
+    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    # 2) Load tokenizer & base model
+    tokenizer = AutoTokenizer.from_pretrained(base_name)
+    model     = AutoModelForCausalLM.from_pretrained(
+        base_name,
+        device_map=device,
+        torch_dtype=model_to_dtype[model_id],
+    )
+    
+    # 3) Wrap the base model with your PEFT adapter
+    model = PeftModel.from_pretrained(
+        model, PEFT_DIR,
+        device_map=device,
+        torch_dtype=model_to_dtype[model_id],
+    )
+    
+    # pline = pipeline("text2text-generation", model=model, tokenizer=tokenizer)
+    pline = pipeline(
+        "text-generation",
+        model=model,
+        device_map=device,
+        torch_dtype=model_to_dtype[model_id],
+        tokenizer=tokenizer,
+    )
+
     main()
