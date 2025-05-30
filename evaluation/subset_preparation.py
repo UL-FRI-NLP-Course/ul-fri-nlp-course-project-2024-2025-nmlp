@@ -3,7 +3,7 @@ from src.input_data import load_data, InputReport
 
 SEED: int = 42
 NUM_SAMPLES: int = 100
-OUTPUT_PATH: str = "data/dp1_inputs.jsonl"
+OUTPUT_PATH: str = "data/dp2_inputs.jsonl"
 
 def preprocess(row: pd.Series) -> str:
     report: InputReport = InputReport(row)
