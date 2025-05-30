@@ -11,7 +11,6 @@ This dataset is comprised of website data that was obtained from the national tr
   - **`output.py`** – DP2 output phase.
   - **`utils.py`** – Helper functions used for DP2 algorithm. 
 
-
 - **`fine_tunning/`**
   - **`dp1_inf.py`** – Inference script for the `dp1` model variant
   - **`dp1.sh`** – Shell script to launch `dp1_inf.py`
@@ -25,7 +24,7 @@ This dataset is comprised of website data that was obtained from the national tr
   - **`evaluation.py`** – General evaluation script for computing metrics (e.g., accuracy, BLEU, ROUGE)
   - **`llm_evaluation.py`** – Evaluation routine using LLM (deepseek)
   - **`llm_evaluation_2.py`** – Alternative or extended version of `llm_evaluation.py`
-  - **`subset_preparation.py`** –
+  - **`subset_preparation.py`** – Extract a small subset of input data for DP2
 
 - **`dp1/`**
   - **`extract.py`** – DP1 extraction of data from rtf and processing it for further use (prompting, fine-tunning)
@@ -34,3 +33,28 @@ This dataset is comprised of website data that was obtained from the national tr
 # Report
 The report for first submission is available [here](https://github.com/UL-FRI-NLP-Course/ul-fri-nlp-course-project-2024-2025-nmlp/blob/main/report/report1.pdf).
 The report for second submission is available [here](https://github.com/UL-FRI-NLP-Course/ul-fri-nlp-course-project-2024-2025-nmlp/blob/main/report/report2.pdf).
+The report for second submission is available [TODO](TODO).
+
+# How to run
+In the following section, may reference some files/models that are available on the Arnes HPC cluser in a shared directory under `/d/hpc/projects/onj_fri/nmlp`
+## Installation and configuration
+Begin by cloning the repository and creating the virtual environment
+```bash
+git clone https://github.com/UL-FRI-NLP-Course/ul-fri-nlp-course-project-2024-2025-nmlp.git
+cd ul-fri-nlp-course-project-2024-2025-nmlp
+python -m venv venv
+. venv/bin/activate
+pip install -r requirements.txt
+pip install -r requirements-pytorch.txt # You may need to adjust the index-url for your CUDA version
+python -m spacy download sl_core_news_lg # Spacy trained pipeline for Slovenian
+```
+We recommend running any python scripts as modules, e.g.: `python -m path.to.file` instead of `python path/to/file.py`.
+
+## Data preparation
+### DP1
+TODO
+### DP2
+The [raw input data](https://github.com/UL-FRI-NLP-Course/ul-fri-nlp-course-project-2024-2025-nmlp/blob/main/data/Podatki%20-%20PrometnoPorocilo_2022_2023_2024.xlsx) is part of the repository.
+The raw output data however, was too large for comfort, so it is available [here](https://unilj-my.sharepoint.com/:u:/r/personal/slavkozitnik_fri1_uni-lj_si/Documents/Predmeti/ONJ/ONJ_2025_Spring/Projects/RTVSlo.zip?csf=1&web=1&e=zhNDxj) and on the HPC cluster as `RTVSlo.zip`.
+After unzipping it and placing `RTVSlo` directory into the project root directory, you can run `python -m src.consolidate_data` to start generating the processed data for DP2, which will be saved to `dp2.jsonl`.
+This file is also available on the cluster.
