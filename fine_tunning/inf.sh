@@ -24,6 +24,6 @@ echo "Running on node: $(hostname)"
 # export TRANSFORMERS_CACHE=$SLURM_TMPDIR/hf_cache
 
 # Run your script
-srun python inference_with_fine_tunning.py
+srun python dp2_inf.py
 
 echo "Job finished"
