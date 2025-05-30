@@ -25,7 +25,11 @@ This dataset is comprised of website data that was obtained from the national tr
   - **`evaluation.py`** – General evaluation script for computing metrics (e.g., accuracy, BLEU, ROUGE)
   - **`llm_evaluation.py`** – Evaluation routine using LLM (deepseek)
   - **`llm_evaluation_2.py`** – Alternative or extended version of `llm_evaluation.py`
-  - **`subset_preparation.py`** – 
+  - **`subset_preparation.py`** –
+
+- **`dp1/`**
+  - **`extract.py`** – Extraction of data from rtf and processing it for further use (prompting, fine-tunning)
+  - **`sentenceMatching.py`** – Sentence matching algorithms used as a helper functio for extract.py
 
 # Report
 The report for first submission is available [here](https://github.com/UL-FRI-NLP-Course/ul-fri-nlp-course-project-2024-2025-nmlp/blob/main/report/report1.pdf).
