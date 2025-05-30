@@ -5,14 +5,15 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import torch
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(device)
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2', device=device)  # lightweight model for semantic similarity
 
+# cosine similarity function
 def compute_similarity_score(generated, reference):
     emb1 = model.encode(generated, convert_to_tensor=True)
     emb2 = model.encode(reference, convert_to_tensor=True)
     return util.cos_sim(emb1, emb2).item()
 
+# gruping based on semantic similarity
 def group_unique_semantic(series, similarity_threshold=0.7):
     """
     Groups sentences based on semantic similarity.
@@ -44,7 +45,7 @@ def group_unique_semantic(series, similarity_threshold=0.7):
         
     return " ".join(unique_sentences)
 
-
+# grouping based on semantic similarity and selecting the most informative sentence
 def group_unique_semantic_informative(series, similarity_threshold=0.7):
     """
     Groups sentences based on semantic similarity and 
@@ -77,6 +78,7 @@ def group_unique_semantic_informative(series, similarity_threshold=0.7):
 
     return " ".join(keep)
 
+# grouping based on TF-IDF scores and semantic similarity
 def group_tf_idf_informative(series, similarity_threshold=0.7):
     # Step 1: Flatten and clean
     all_sentences = []
@@ -117,6 +119,7 @@ road_keywords = [
 
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
+# Group sentences with a preference for named entities related to roads
 def group_with_named_entity_preference(series, similarity_threshold=0.7):
     all_sentences = []
     for text in series:
@@ -141,3 +144,50 @@ def group_with_named_entity_preference(series, similarity_threshold=0.7):
         result.append(sentences[best_idx])
         used.update(group)
     return " ".join(result)
+
+# sentenceMatching.py – Example usages (was mostly used for: extract.py)
+# -------------------------------------------------------------
+
+# compute_similarity_score:
+# Computes cosine similarity between two texts using sentence embeddings.
+# Useful in extract.py's `test_preprocessing_strategies()` to evaluate how close the generated prompt is to the RTF summary.
+# compute_similarity_score(
+#     generated="Prometne informacije ...",
+#     reference="Dežurna služba poroča ..."
+# )
+
+# group_unique_semantic:
+# Groups semantically similar sentences and keeps one representative from each group.
+# Used inside extract.py as a grouping function in `create_prompt_input()` or `prepare_prompt_from_datetime()`.
+# group_unique_semantic(pd.Series([
+#     "Zastoji na AC A1 med Celjem in Dravskim Poljem.",
+#     "Na avtocesti A1 so zastoji pri Celju.",
+#     "Počasna vožnja v bližini Dravskega Polja."
+# ]))
+
+# group_unique_semantic_informative:
+# Same as `group_unique_semantic`, but chooses the *most informative* (longest) sentence per group.
+# Used as a default grouping strategy in many extract.py functions like `prepare_prompt_from_datetime()`.
+# group_unique_semantic_informative(pd.Series([
+#     "Zastoj na AC A1 med Celjem in Dravskim Poljem.",
+#     "Gneča na avtocesti v bližini Celja.",
+#     "Na cesti med Dravskim Poljem in Celjem je počasna vožnja zaradi del."
+# ]))
+
+# group_tf_idf_informative:
+# Uses TF-IDF to score informativeness, and semantic similarity to group.
+# Useful in extract.py to test alternative prompt-generation strategies.
+# group_tf_idf_informative(pd.Series([
+#     "Počasna vožnja na AC A2.",
+#     "Zaradi nesreče je promet upočasnjen.",
+#     "Zastoj na avtocesti A2 med Ljubljano in Kranjem."
+# ]))
+
+# group_with_named_entity_preference:
+# Prefers sentences containing road-related keywords (locations, objects) when choosing group representatives.
+# Used in extract.py’s `test_preprocessing_strategies()` to evaluate grouping strategies with domain-specific bias.
+# group_with_named_entity_preference(pd.Series([
+#     "Zastoj na uvozu za Štajersko avtocesto.",
+#     "Gneča pred razcepom Dragučova.",
+#     "Zaradi nesreče pri izvozu Ljubljana vzhod je promet upočasnjen."
+# ]))
