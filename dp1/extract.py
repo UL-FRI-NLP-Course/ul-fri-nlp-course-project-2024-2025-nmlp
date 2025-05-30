@@ -427,7 +427,7 @@ def test_preprocessing_strategies():
 
 
 def main_random_pairs(
-    n_times=50,
+    n_times=1,
     start_str="2023-01-01 00:00:00",
     end_str="2024-12-31 23:59:59",
     hours_back=4,
