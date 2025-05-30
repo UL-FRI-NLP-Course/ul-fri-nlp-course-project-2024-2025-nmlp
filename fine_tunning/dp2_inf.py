@@ -179,8 +179,13 @@ def test():
         print("--------------------------\n")
 
 def main():
+    lines_to_skip = 0
+    with open(OUTPUT_PATH, "rt") as file:
+        lines_to_skip = len(file.readlines())
+    print(f"Lines to skip: {lines_to_skip}")
     df: pd.DataFrame = pd.read_json(INPUTS_PATH, lines=True)
     example_inputs: list[str] = [x for x in df["text"]]
+    example_inputs = example_inputs[lines_to_skip:]
     prompts: list[str] = [prompt_template.format(input=example) for example in example_inputs]
     with open(OUTPUT_PATH, "at") as file:
         for i in range(len(prompts)):
