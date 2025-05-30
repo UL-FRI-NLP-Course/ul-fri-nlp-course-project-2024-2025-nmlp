@@ -33,7 +33,7 @@ The report for first submission is available [here](https://github.com/UL-FRI-NL
 
 The report for second submission is available [here](https://github.com/UL-FRI-NLP-Course/ul-fri-nlp-course-project-2024-2025-nmlp/blob/main/report/report2.pdf).
 
-The report for second submission is available [here](https://github.com/UL-FRI-NLP-Course/ul-fri-nlp-course-project-2024-2025-nmlp/blob/main/report/report3.pdf).
+The report for final submission is available [here](https://github.com/UL-FRI-NLP-Course/ul-fri-nlp-course-project-2024-2025-nmlp/blob/main/report/report3.pdf).
 
 # How to run
 In the following section, may reference some files/models that are available on the Arnes HPC cluser in a shared directory under `/d/hpc/projects/onj_fri/nmlp`
