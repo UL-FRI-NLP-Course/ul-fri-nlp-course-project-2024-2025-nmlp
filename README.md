@@ -5,11 +5,11 @@ The scope also encompasses a dataset that can be used for any supervised approac
 This dataset is comprised of website data that was obtained from the national traffic news website and the final news reports. 
 
 - **`src/`**  
-  - **`data/consolidate_data.py`** – 
-  - **`preprocessing/gams.py`** –
-  - **`models/input.py`** –   
-  - **`models/output.py`** – 
-  - **`utils/utils.py`** –
+  - **`consolidate_data.py`** – 
+  - **`gams.py`** –
+  - **`input.py`** –   
+  - **`output.py`** – 
+  - **`utils.py`** –
 
 
 - **`fine_tunning/`**
