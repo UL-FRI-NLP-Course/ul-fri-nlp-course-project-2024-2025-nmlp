@@ -198,7 +198,6 @@ def main():
                 result = result[:result.index("<EOS>")]
                 file.write(json.dumps({"input": example_inputs[i], "output": result}, ensure_ascii=False) + "\n")
                 file.flush()
-                torch.cuda.empty_cache()
             except Exception as e:
                 print("Error while trying to save generated output: " + str(e))
             print(f"Took {time.time()-t0:.1f} seconds")
