@@ -1,9 +1,18 @@
 import re
 import os
+import json
+import numpy as np
+import numpy.typing as npt
 from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv(".env")
+
+IO_FILES: list[str] = [
+    "data/basic_outputs.jsonl",
+    "data/dp1_outputs.jsonl",
+    "data/dp2_outputs.jsonl",
+]
 
 ONLY_NUMBERS = re.compile(r"[0-9]+(\.[0-9]+)?")
 HEADER_REGEX: re.Pattern = re.compile(r"^([^0-9]*?)\s*([0-9]+)\.\s*([0-9]+)\.\s*([0-9]+)\s*([0-9]+)\.([0-9]+)\s*(.*?)$")
@@ -201,17 +210,38 @@ def get_score(report_in: str, report_out: str) -> float | None:
     score = None
     try:
         iter = ONLY_NUMBERS.finditer(response_str)
-        num = next(iter).group()
-        if 1 <= float(num) <= 10:
+        num = float(next(iter).group())
+        if 1 <= num <= 10:
             score = num
     except:
         pass
     return score
 
-def main():
+def test():
     report_in = "danes je bla nesreca na ljubljanski obvoznici"
     report_out = "zastoj na avtocesti"
     print(get_score(report_in, report_out))
+
+def run_evaluation(filename: str):
+    print(f"Running evaluation for {filename}")
+    scores: list[float] = []
+    with open(filename, "rt") as file:
+        lines = file.readlines()
+        for i, line in enumerate(lines):
+            print(f"[{i+1}/{len(lines)}]")
+            obj = json.loads(line)
+            score: float | None = get_score(obj["input"], obj["output"])
+            if score is not None:
+                scores.append(score)
+    scores_np: npt.NDArray = np.array(scores)
+    print(f"Scores: {scores}")
+    print(f"Score average: {scores_np.mean()}")
+    print(f"Score st. dev.: {scores_np.std()}")
+    print()
+
+def main():
+    for filename in IO_FILES:
+        run_evaluation(filename)
 
 if __name__ == "__main__":
     main()
