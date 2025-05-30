@@ -5,11 +5,11 @@ The scope also encompasses a dataset that can be used for any supervised approac
 This dataset is comprised of website data that was obtained from the national traffic news website and the final news reports. 
 
 - **`src/`**  
-  - **`consolidate_data.py`** – 
-  - **`gams.py`** –
-  - **`input.py`** –   
-  - **`output.py`** – 
-  - **`utils.py`** –
+  - **`consolidate_data.py`** – Data extraction/preparation for DP2.
+  - **`gams.py`** – Baseline inference program.
+  - **`input.py`** – DP2 reading phase.
+  - **`output.py`** – DP2 output phase.
+  - **`utils.py`** – Helper functions used for DP2 algorithm. 
 
 
 - **`fine_tunning/`**
@@ -28,7 +28,7 @@ This dataset is comprised of website data that was obtained from the national tr
   - **`subset_preparation.py`** –
 
 - **`dp1/`**
-  - **`extract.py`** – Extraction of data from rtf and processing it for further use (prompting, fine-tunning)
+  - **`extract.py`** – DP1 extraction of data from rtf and processing it for further use (prompting, fine-tunning)
   - **`sentenceMatching.py`** – Sentence matching algorithms used as a helper functio for extract.py
 
 # Report
