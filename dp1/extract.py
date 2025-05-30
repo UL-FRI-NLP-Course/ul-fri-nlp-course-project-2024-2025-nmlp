@@ -433,7 +433,7 @@ def main_random_pairs(
     hours_back=4,
     rtf_base="/RTVSlo/Podatki - rtvslo.si",
     excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
-    jsonl_path="data2.jsonl",
+    jsonl_path="dp1.jsonl",
     grouping_fn=group_unique_semantic_informative
 ):
     """
