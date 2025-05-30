@@ -124,7 +124,8 @@ Ti si profesionalen poročevalec prometnih poročil.
 Tvoja naloga je oceniti generirana poročila.
 
 Ta poročila so bila generirana na podlagi podatkov s spletne strani promet.si.
-Poročila ne smejo vsebovati informacij, ki jih ni med podatki s spletne strani.
+Poročila ne smejo biti samo dobesedna kopija podatkov s spletne strani.
+Poročila ne smejo vsebovati informacij, ki jih ni med podatki s spletne strani (ne sme biti izmišljenih oz. irelevantnih informacij).
 Poleg tega tudi ne smejo spuščati pomembnih podatkov.
 
 Spodaj so podana navodila za kako mora biti poročilo ustvarjeno.
