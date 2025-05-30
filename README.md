@@ -58,3 +58,11 @@ The [raw input data](https://github.com/UL-FRI-NLP-Course/ul-fri-nlp-course-proj
 The raw output data however, was too large for comfort, so it is available [here](https://unilj-my.sharepoint.com/:u:/r/personal/slavkozitnik_fri1_uni-lj_si/Documents/Predmeti/ONJ/ONJ_2025_Spring/Projects/RTVSlo.zip?csf=1&web=1&e=zhNDxj) and on the HPC cluster as `RTVSlo.zip`.
 After unzipping it and placing `RTVSlo` directory into the project root directory, you can run `python -m src.consolidate_data` to start generating the processed data for DP2, which will be saved to `dp2.jsonl`.
 This file is also available on the cluster.
+
+## Fine tuning (FT)
+For fine-tuning, we recommend an HPC node with at least on H100 or equivalent.
+Before running the whole process, you can adjust some variables in `fine_tunning/fine_tunning.py`:
+- `IO_PAIRS_PATH`: path to `dp1.jsonl` or `dp2.jsonl` file (output from data preprocessing stage).
+- `MODEL_NAME` to choose the size of the model you want to FT (we used 27B variant).
+- `PEFT_DIR` path to where the checkpoints will be saved to.
+Now run the process using `python -m fine_tunning.fine_tunning`.
