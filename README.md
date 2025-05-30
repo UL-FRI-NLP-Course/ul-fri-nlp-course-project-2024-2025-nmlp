@@ -61,7 +61,7 @@ ln -s /d/hpc/projects/onj_fri/nmlp/huggingface ~/.cache/huggingface
 
 ## Data preparation
 ### DP1
-TODO
+DP1 was ran locally, so adjusting the paths is what you must change in order for the program to work. You should adjust rtf_base, which is where all the RTF files provided from RTVSLO are, as well as the excel_path also provided by RTVSLO. After that you should be able to run with simple python -m extract.py, which outputs a 'dl1.jsonl', which is later used in fine_tuning as well as 'evaluation.py'.
 ### DP2
 The [raw input data](https://github.com/UL-FRI-NLP-Course/ul-fri-nlp-course-project-2024-2025-nmlp/blob/main/data/Podatki%20-%20PrometnoPorocilo_2022_2023_2024.xlsx) is part of the repository.
 The raw output data however, was too large for comfort, so it is available [here](https://unilj-my.sharepoint.com/:u:/r/personal/slavkozitnik_fri1_uni-lj_si/Documents/Predmeti/ONJ/ONJ_2025_Spring/Projects/RTVSlo.zip?csf=1&web=1&e=zhNDxj) and on the HPC cluster as `RTVSlo.zip`.
