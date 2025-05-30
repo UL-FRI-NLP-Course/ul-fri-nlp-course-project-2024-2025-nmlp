@@ -20,10 +20,8 @@ This dataset is comprised of website data that was obtained from the national tr
   - **`ft.sh`** – Shell script to launch `fine_tunning.py`
  
 - **`evaluation/`**
-  - **`eval.sh`** – Shell script for launching evaluation jobs
   - **`evaluation.py`** – General evaluation script for computing metrics (e.g., accuracy, BLEU, ROUGE)
   - **`llm_evaluation.py`** – Evaluation routine using LLM (deepseek)
-  - **`llm_evaluation_2.py`** – Alternative or extended version of `llm_evaluation.py`
   - **`subset_preparation.py`** – Extract a small subset of input data for DP2
 
 - **`dp1/`**
