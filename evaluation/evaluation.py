@@ -5,6 +5,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import torch 
+import json
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
@@ -137,18 +138,82 @@ def recall_tokens(ground_truth, generated_output):
 
 
 # Example usage:
-functions = [
-    f1_token_overlap,
-    jaccard_similarity,
-    bleu_score,
-    rouge_l_score,
-    levenshtein_ratio,
-    embedding_similarity,
-    precision_tokens,
-    recall_tokens
-]
-results = eval_multiple(functions, "This is a test sentence.", "This is a test sentence for evaluation.")
-print("Evaluation Results:")
-for func_name, score in results.items():
-    print(f"{func_name}: {score:.4f}")
+# functions = [
+#     f1_token_overlap,
+#     jaccard_similarity,
+#     bleu_score,
+#     rouge_l_score,
+#     levenshtein_ratio,
+#     embedding_similarity,
+#     precision_tokens,
+#     recall_tokens
+# ]
+
+# results = eval_multiple(functions, "This is a test sentence.", "This is a test sentence for evaluation.")
+# print("Evaluation Results:")
+# for func_name, score in results.items():
+#     print(f"{func_name}: {score:.4f}")
+
+if __name__ == "__main__":
+    # Basic example usage
+    # gt = "This is a test sentence."
+    # pred = "This is a test sentence for evaluation."
+    
+    # results = eval_multiple(functions, gt, pred)
+    # print("Evaluation Results:")
+    # for func_name, score in results.items():
+    #     print(f"{func_name}: {score:.4f}")
+
+    # Usage for DP1:
+    functions = [
+        f1_token_overlap,
+        jaccard_similarity,
+        bleu_score,
+        rouge_l_score,
+        levenshtein_ratio,
+        embedding_similarity,
+        precision_tokens,
+        recall_tokens
+    ]
+
+    # --- prepare a place to store scores for each metric ---
+    scores = {func.__name__: [] for func in functions}
+
+    # --- iterate over your merged JSONL file ---
+    with open("data/dp1_gt.jsonl", "rt", encoding="utf-8") as f:
+        for line in f:
+            obj = json.loads(line)
+            gt   = obj["gt"]
+            pred = obj["output"]
+
+            for func in functions:
+                try:
+                    val = func(gt, pred)
+                except Exception as e:
+                    # if something goes wrong in a metric, record NaN
+                    print(f"[Warning] {func.__name__} failed on input {obj['input'][:20]!r}: {e}")
+                    val = float("nan")
+                scores[func.__name__].append(val)
+
+    # --- compute median & std for each metric ---
+    print("\nMetric\t\tMedian\tStdDev")
+    print("-" * 30)
+    for name, vals in scores.items():
+        arr = np.array(vals, dtype=float)
+        median = np.nanmedian(arr)
+        std    = np.nanstd(arr)
+        print(f"{name:16s}\t{median:.4f}\t{std:.4f}")
+
+    # results:
+    # Metric          Median  StdDev
+    # ------------------------------
+    # f1_token_overlap        0.3877  0.0553
+    # jaccard_similarity      0.2405  0.0433
+    # bleu_score              0.0898  0.0432
+    # rouge_l_score           0.2859  0.0474
+    # levenshtein_ratio       0.5118  0.0389
+    # embedding_similarity    0.8620  0.0399
+    # precision_tokens        0.3491  0.0760
+    # recall_tokens           0.4208  0.1100
+        
 
