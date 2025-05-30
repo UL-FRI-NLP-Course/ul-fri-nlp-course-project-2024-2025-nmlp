@@ -1,14 +1,22 @@
 import torch
+import pandas as pd
+import json
+import time
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from peft         import PeftConfig, PeftModel
+from evaluation.llm_evaluation_2 import GENERATION_INSTRUCTIONS
+
+INPUTS_PATH: str = "data/dp2_inputs.jsonl"
+OUTPUT_PATH: str = "data/dp2_outputs.jsonl"
 
 # Path to your adapter
 # PEFT_DIR = "/d/hpc/projects/onj_fri/peft_ah/2B-dp2/outputs/checkpoint-6661"
 # model_id = "cjvt/GaMS-2B"
 
 # PEFT_DIR = "/d/hpc/projects/onj_fri/peft_ah/9b-instr-dp2"
-PEFT_DIR = "/d/hpc/projects/onj_fri/nmlp/PEFT2"
 # model_id = "cjvt/GaMS-9B-Instruct"
+
+PEFT_DIR = "/d/hpc/projects/onj_fri/nmlp/PEFT2"
 model_id = "cjvt/GaMS-27B-Instruct"
 
 model_to_dtype: dict[str, torch.dtype] = {
@@ -102,83 +110,41 @@ shot_3: str = """
     # "The examples of antonyms are:\nhigh => low\nwide => narrow\nbig =>",
     # "Pristanek je bil prvi nadzorovani spust ameriškega vesoljskega plovila na površje Lune po Apollu 17 leta 1972, ko je na Luni pristala zadnja Nasina misija s posadko.\nDoslej so na Luni pristala vesoljska plovila le iz štirih drugih držav –",
     # "U četvrtak je bila prva polufinalna večer Dore, a komentari na društvenim mrežama ne prestaju. U nedjeljno finale prošli su:",
-prompts = [
-    f"""
-    Poziv za generiranje prometnih poročil (RTV Slovenija)
-    Generiraj kratko in strukturirano prometno poročilo v slogu RTV Slovenija na podlagi tabelaričnih prometnih dogodkov (iz preteklih X ur, npr. 3–4 ure).
-    Oblika poročila:
-    ------------------------------------------------------------
-    Prometne informacije       DD. MM. YYYY       HH.MM           2. program
-    
-    Podatki o prometu.
-    
-    <sledi povzetek> 
-    ------------------------------------------------------------
-    
-    Navodila za vsebino:
-    - Povzemi pomembne dogodke: nesreče, zapore cest, živali na vozišču, izredne razmere (burja, tovorna prepoved).
-    - Vključi strukturo stavkov:
-        1. opcija: Cesta in smer + razlog + posledica + odsek
-        2. opcija: Razlog + cesta in smer + posledica + odsek
-    - Prednost imajo stavki, ki vključujejo:
-      - znana cestna imena (avtoceste, razcepi, mesta),
-      - konkretne učinke na promet (zastoji, zapora pasu),
-      - točne lokacije (med priključkoma X in Y).
-    
-    Navodila za slog:
-    - Ne ponavljaj istih ali zelo podobnih informacij.
-    - Združi podobne stavke, obdrži najbolj informativen.
-    - Ne vključuj trivialnih informacij ali običajnih konic, razen če so izredno dolge ali nenavadne.
-    - Vsak stavek naj bo jedrnat in razumljiv za branje v etru.
-    
-    Poročilo se mora končati z oznako <EOS>
-    Spodaj sledijo primeri vhodnih podatkov (iz Excela) in ustrezno oblikovanih izhodnih poročil:
+prompt_template = f"""
+Si profesionalen poročevalec prometnih informacij.
+Dobil boš nekaj podatkov, ki so bili pridobljeni s spletne strani prometnih informacij.
+Tvoja naloga je da ustvariš kratko prometno poročilo (IZHOD) na podlagi teh podatkov (VHOD).
+Poročilo se mora končati z oznako <EOS>
 
-    {shot_1}
+Slediti moraš naslednjim navodilom:
 
-    ### NASLEDNJI PRIMER ###
+### ZAČETEK NAVODIL
 
-    {shot_2}
+{GENERATION_INSTRUCTIONS}
 
-    ### NASLEDNJI PRIMER ###
+### KONEC NAVODIL
 
-    {shot_3}
+Nadaljuj zaporedje naslednjih primerov:
 
-    ### NASLEDNJI PRIMER ###
+{shot_1}
 
-    VHOD:
-    {{input}}
+### NASLEDNJI PRIMER ###
 
-    IZHOD:
-    """,
-    f"""
-    Si profesionalen poročevalec prometnih informacij.
-    Dobil boš nekaj podatkov, ki so bili pridobljeni s spletne strani prometnih informacij.
-    Tvoja naloga je da ustvariš kratko prometno poročilo (IZHOD) na podlagi teh podatkov (VHOD).
-    Poročilo se mora končati z oznako <EOS>
+{shot_2}
 
-    Nadaljuj zaporedje naslednjih primerov:
+### NASLEDNJI PRIMER ###
 
-    {shot_1}
+{shot_3}
 
-    ### NASLEDNJI PRIMER ###
+### NASLEDNJI PRIMER ###
 
-    {shot_2}
+VHOD:
+{{input}}
 
-    ### NASLEDNJI PRIMER ###
+IZHOD:
+""".strip()
 
-    {shot_3}
-
-    ### NASLEDNJI PRIMER ###
-
-    VHOD:
-    {{input}}
-
-    IZHOD:
-    """,
-]
-
-input: str = """
+example_input: str = """
     Na štajerski avtocesti je zaradi okvare vozila oviran promet na zaviralnem pasu pred izvozom Blagovica iz smeri Ljubljane.
     Na primorski avtocesti je zaradi okvare vozila oviran promet med razcepom Nanos in priključkom Senožeče proti Kopru.
     Na gorenjski avtocesti je zaradi okvare vozila oviran promet med priključkom Lesce in galerijo Moste proti Karavankam.
@@ -193,26 +159,50 @@ input: str = """
     V Domžalah je zaprta Virska cesta, med Ljubljansko cesto in Podrečjem. Do 10. aprila bo promet preko priključka Domžale proti Kamniku preusmerjen na lokalne ceste.
 """
 
-prompts = [prompt.format(input=input) for prompt in prompts]
+def test():
+    prompt = prompt_template.format(input=example_input)
+    sequences = pline(
+        [prompt],
+        max_new_tokens=512,
+        num_return_sequences=1,
+        return_full_text=False,
+    )
+    for seq in sequences:
+        result: str = seq[0]["generated_text"]
+        try:
+            result = result[:result.index("<EOS>")]
+        except:
+            print("Error while trying to cut generated output")
+    
+        print("--------------------------")
+        print(f"Result: {result}")
+        print("--------------------------\n")
 
-sequences = pline(
-    prompts,
-    max_new_tokens=512,
-    num_return_sequences=1,
-    return_full_text=False,
-)
+def main():
+    df: pd.DataFrame = pd.read_json(INPUTS_PATH, lines=True)
+    example_inputs: list[str] = [x for x in df["text"]]
+    prompts: list[str] = [prompt_template.format(input=example) for example in example_inputs]
+    with open(OUTPUT_PATH, "at") as file:
+        for i in range(len(prompts)):
+            print(f"[{i+1}/{len(prompts)}]")
+            t0 = time.time()
+            sequences = pline(
+                [prompts[i]],
+                max_new_tokens=512,
+                num_return_sequences=1,
+                return_full_text=False,
+            )
+            try:
+                seq = sequences[0]
+                result: str = seq[0]["generated_text"]
+                result = result[:result.index("<EOS>")]
+                file.write(json.dumps({"input": example_inputs[i], "output": result}, ensure_ascii=False) + "\n")
+                file.flush()
+                torch.cuda.empty_cache()
+            except Exception as e:
+                print("Error while trying to save generated output: " + str(e))
+            print(f"Took {time.time()-t0:.1f} seconds")
+    print("Done")
 
-
-for seq in sequences:
-    result: str = seq[0]["generated_text"]
-    try:
-        result = result[:result.index("<EOS>")]
-    except:
-        print("Error while trying to cut generated output")
-
-    print("--------------------------")
-    print(f"Result: {result}")
-    print("--------------------------\n")
-
-
-
+if __name__ == "__main__":
+    main()
