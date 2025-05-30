@@ -4,7 +4,6 @@ from datasets import Dataset
 import torch
 import json
 import os
-from transformers import DataCollatorForLanguageModeling, DataCollatorForSeq2Seq
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 device = "auto" if torch.cuda.device_count() > 1 else device
@@ -15,17 +14,16 @@ print(f"Running on: {device}", flush=True)
 
 # ---------- CONFIGURATION ----------
 # MODEL_NAME = "cjvt/GaMS-2B"
-MODEL_NAME = "cjvt/GaMS-9B-Instruct"
-# MODEL_NAME = "cjvt/GaMS-27B-Instruct"
+# MODEL_NAME = "cjvt/GaMS-9B-Instruct"
+MODEL_NAME = "cjvt/GaMS-27B-Instruct"
 
 model_to_dtype: dict[str, torch.dtype] = {
     "cjvt/GaMS-2B": torch.float32,
     "cjvt/GaMS-9B-Instruct": torch.bfloat16,
     "cjvt/GaMS-27B-Instruct": torch.bfloat16,
 } 
-# PEFT_DIR = "/d/hpc/projects/onj_fri/nmlp/PEFT/"
-PEFT_DIR = "/d/hpc/projects/onj_fri/peft_ah/9B-instr-dp11"
-IO_PAIRS_PATH = "/d/hpc/projects/onj_fri/nmlp/dp1.jsonl"
+PEFT_DIR = "/d/hpc/projects/onj_fri/nmlp/PEFT/"
+IO_PAIRS_PATH = "/d/hpc/projects/onj_fri/nmlp/dp2.jsonl"
 
 if not os.path.exists(PEFT_DIR):
     os.makedirs(PEFT_DIR, exist_ok=True)
@@ -39,8 +37,8 @@ def main():
     # ---------- LoRA Configuration ----------
     lora_config = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
-        r=64,
-        lora_alpha=64,
+        r=8,
+        lora_alpha=32,
         lora_dropout=0.1,
         bias="none"
     )
@@ -50,7 +48,6 @@ def main():
         print("Resuming from PEFT checkpoint...")
         base_model = AutoModelForCausalLM.from_pretrained(
             MODEL_NAME,
-            attn_implementation="eager",  # For Gemma2 recommended
             device_map=device,
             torch_dtype=model_to_dtype[MODEL_NAME],
         )
@@ -59,7 +56,6 @@ def main():
         print("Loading base model and applying LoRA...")
         base_model = AutoModelForCausalLM.from_pretrained(
             MODEL_NAME,
-            attn_implementation="eager",  # For Gemma2 recommended
             device_map=device,
             torch_dtype=model_to_dtype[MODEL_NAME],
         )
@@ -79,8 +75,8 @@ def main():
             i = 0
             for line in f:
                 data_point = json.loads(line)
-                data["input"].append(data_point["input"])
-                data["output"].append(data_point["output"])
+                data["input"].append(data_point["vhod"])
+                data["output"].append(data_point["izhod"])
                 i += 1
         print(f"Loaded {i} input-output pairs from {IO_PAIRS_PATH}")
         return Dataset.from_dict(data)
@@ -100,68 +96,39 @@ def main():
     dataset = get_dataset()
     
     # ---------- Preprocessing ----------
-    IGNORE_INDEX = -100
-    MAX_LENGTH = 1024
-
     def preprocess(example):
-        prompt = example["input"].strip()
-        output = example["output"].strip()
-
-        # Structured full prompt
+        prompt = example["input"]
+        output = example["output"]
         full_input = f"VHOD:\n{prompt}\n\nIZHOD:\n{output}\n<EOS>"
-        full_prompt = f"VHOD:\n{prompt}\n\nIZHOD:\n"
-
-        tokenized = tokenizer(
-            full_input,
-            truncation=True,
-            padding="max_length",
-            max_length=MAX_LENGTH
-        )
-
-        # Mask prompt part in labels (we only want model to learn to predict the output)
-        prompt_ids = tokenizer(
-            full_prompt,
-            truncation=True,
-            max_length=MAX_LENGTH
-        )["input_ids"]
-
-        labels = tokenized["input_ids"].copy()
-        masked_len = min(len(prompt_ids), len(labels))
-        labels[:masked_len] = [IGNORE_INDEX] * masked_len
-
-        tokenized["labels"] = labels
+        tokenized = tokenizer(full_input, truncation=True, padding="max_length", max_length=256)
+        tokenized["labels"] = tokenized["input_ids"].copy()
         return tokenized
     
     print("Preprocessing dataset...")
-    dataset = dataset.map(preprocess, num_proc=4)
+    dataset = dataset.map(preprocess)
     
     # ---------- Training Args ----------
     training_args = TrainingArguments(
         output_dir=f"{PEFT_DIR}/outputs",
         per_device_train_batch_size=1,
         num_train_epochs=3,
-        logging_strategy="steps",
-        logging_steps=50,
-        save_strategy="epoch",
-        save_total_limit=20,
+        logging_dir="./logs",
+        logging_steps=5,
+        save_steps=20,
+        save_total_limit=2,
         learning_rate=1e-4,
         report_to="none",
-        fp16=(model_to_dtype[MODEL_NAME] == torch.float16),
         bf16=(model_to_dtype[MODEL_NAME] == torch.bfloat16),
-        disable_tqdm=False,
-        dataloader_pin_memory=False,
-        gradient_accumulation_steps=4,
     )
     
-    # data_collator = DataCollatorWithPadding(tokenizer)
-    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
-
+    data_collator = DataCollatorWithPadding(tokenizer)
     
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=dataset,
         data_collator=data_collator,
+        tokenizer=tokenizer,
     )
 
     # ---------- TRAIN ----------
