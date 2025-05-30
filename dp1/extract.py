@@ -431,7 +431,7 @@ def main_random_pairs(
     start_str="2023-01-01 00:00:00",
     end_str="2024-12-31 23:59:59",
     hours_back=4,
-    rtf_base="C:/Users/a/Desktop/git/magisterij/1.2/NLP/RTVSlo/Podatki - rtvslo.si",
+    rtf_base="/RTVSlo/Podatki - rtvslo.si",
     excel_path="data/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx",
     jsonl_path="data2.jsonl",
     grouping_fn=group_unique_semantic_informative
